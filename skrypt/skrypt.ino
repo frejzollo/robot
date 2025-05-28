@@ -91,8 +91,6 @@ void loop() {
       leftMotor(0);
       rightMotor(0);
     } else {
-      speedRatio = constrain(1 - float(analogRead(speedsetter)) / 690.0, 0, 1);
-
       // Nowe wagi sensorów (bez skrajnych sensorów)
       float sensor_weights[7] = {-4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0};
 
@@ -121,7 +119,7 @@ void loop() {
       last_error = line_error;
 
       // Dynamiczna prędkość w zależności od zakrętu
-      float base_speed = constrain(80.0 - abs(line_error) * 10.0, 80.0, 130.0);
+      float base_speed = constrain(130.0 - abs(line_error) * 10.0, 80.0, 130.0);
 
       float left_speed = base_speed + correction;
       float right_speed = base_speed - correction;
