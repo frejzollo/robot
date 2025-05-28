@@ -132,7 +132,7 @@ void loop() {
 }
 
   if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
-    basicInfo();
+    //basicInfo();
     //levelsInfo();
   }
 
