@@ -106,5 +106,6 @@ void levelsInfo(){
     Serial.print(caliValues[i]);
     Serial.print(i < 6 ? ", " : "] \n");
   }
+  delay(1000);
 
 }
