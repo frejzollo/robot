@@ -1,30 +1,46 @@
 const int speedsetter = A0;
 const int button = 13;
+int mode=0;
 
 int Sensors[7] = {A1, A2, A3, A4, A5, A6, A7};
-int AnalogValues[7];
-int CaliValues[7];
+int blackLevels[7]; //stany na linii
+int whiteLevels[7]; //stany na powierzchni
+int caliValues[7]; //skalibrowane
+int analogValues[7]; // wartosci z sensorow
+
+int readErrorBlack = 7; // podloga
+int readErrorWhite = 7; // linia
 
 void setup() {
   Serial.begin(9600);  // Uruchomienie komunikacji szeregowej
+  for (int i = 0; i < 7; i++) {
+    pinMode(analogPins[i], INPUT);
+  }
+  pinMode(speedsetter, INPUT);
+  pinMode(button, INPUT);
 }
 
 void loop() {
-basic_info();
+    for (int i = 0; i < 7; i++) {
+    analogValues[i] = analogRead(Sensors[i]);
+  }
+  //basic_info();
 }
 
-void basic_info()
-  {
-  for (int i = 0; i <= 7; i++) {
-    int value = analogRead(i);  // Odczyt z wejścia analogowego (A0 to 0, A1 to 1, ..., A7 to 7)
-    Serial.print("A");
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.print(value);
-    Serial.print("   ");
+//informacja na serial: stan guzika / wartość pokrętła / [wartości sensorów] / tryb pracy (mode)
+void basicInfo(){
+
+  Serial.print(digitalRead(button));
+  Serial.print(" / ");
+  Serial.print(analogRead(speedsetter));
+  Serial.print(" / [");
+  for (int i = 0; i < 7; i++) {
+    Serial.print(analogValues[i]);
+    Serial.print(i < 6 ? ", " : "] / ");
   }
-  Serial.println();  // Nowa linia po wszystkich odczytach
-  delay(500);        // Małe opóźnienie dla czytelności
-};
+  Serial.print(mode);
+  Serial.println();
+  delay(1000);
+}
 
 
