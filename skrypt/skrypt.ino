@@ -11,10 +11,22 @@ int analogValues[7]; // wartosci z sensorow
 int readErrorBlack = 7; // podloga
 int readErrorWhite = 7; // linia
 
+//-----------------------------------------------------------------------------------
+// Wartości pomocnicze
 int iteration = 0; //ile razy wykonano pętle loop()
-
+float speedRatio = 0;
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
+
+
+// Motor lewy
+const int ENL = 5;
+const int L2 = 3;
+const int L1 = 4; //z tym pinem serial nie działa, można zmienić jak zależy na debugu
+// Motor prawy
+const int ENR = 6; // ^ -||-
+const int R2 = 7;
+const int R1 = 8;
 
 
 void setup() {
@@ -24,6 +36,12 @@ void setup() {
   }
   pinMode(speedsetter, INPUT);
   pinMode(button, INPUT);
+  pinMode(L1, OUTPUT);
+  pinMode(L2, OUTPUT);
+  pinMode(R1, OUTPUT);
+  pinMode(R2, OUTPUT);
+  pinMode(ENL, OUTPUT);
+  pinMode(ENR, OUTPUT);
 }
 
 void loop() {
@@ -65,15 +83,38 @@ void loop() {
     }
   }
 
+  //mod 3: jazda
+  if(mode == 3){
+    speedRatio = constrain(1 - float(analogRead(speedsetter))/690, 0, 1);
+    if(sumSensorsAnalog() < 10){ //stop gdy podniesiemy robota lub gdy najedzie prostopadle na linie!!
+      // leftMotor(0);
+      // rightMotor(0);
+    }else{
+      //TUTAJ JAZDA
+    }
+  }
+
   if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
-    //basicInfo();
-    levelsInfo();
+    basicInfo();
+    //levelsInfo();
   }
 
   iteration += 1;
   delay(10);
 }
 
+//suma analogowych wartości czujników 
+int sumSensorsAnalog(){
+  int x = 0;
+  for(int i = 0; i < 7; i++){
+    x += analogValues[i];
+  }
+  return x;
+}
+
+
+//_______________________________________________________________________________________________
+// DEBUG
 
 //informacja na serial: stan guzika / wartość pokrętła / [wartości sensorów] / tryb pracy (mode)
 void basicInfo(){
