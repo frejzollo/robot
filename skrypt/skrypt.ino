@@ -64,8 +64,8 @@ void loop() {
     }
   }
 
-  //basicInfo();
-  levelsInfo();
+  basicInfo();
+  //levelsInfo();
 }
 
 //informacja na serial: stan guzika / wartość pokrętła / [wartości sensorów] / tryb pracy (mode)
