@@ -7,6 +7,7 @@ int blackLevels[7]; //stany na linii
 int whiteLevels[7]; //stany na powierzchni
 int caliValues[7]; //skalibrowane
 int analogValues[7]; // wartosci z sensorow
+float sensor_weights[7] = {-4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0};
 
 int readErrorBlack = 7; // podloga
 int readErrorWhite = 7; // linia
@@ -83,9 +84,10 @@ void loop() {
     }
   }
 
-//mod 3: jazda
-  if (mode == 3) {
-    if (sumSensorsAnalog() < 10) { // stop gdy robot nie widzi linii
+  //mod 3: jazda
+  if(mode == 3){
+    speedRatio = constrain(1 - float(analogRead(speedsetter))/150, 0, 1);
+    if(sumSensorsAnalog() < 70){ //stop gdy podniesiemy robota lub gdy najedzie prostopadle na linie!!
       leftMotor(0);
       rightMotor(0);
     } else {
@@ -97,7 +99,7 @@ void loop() {
       float line_error = 0.0;
       int count = 0;
 
-      for (int i = 0; i < 9; i++) {
+      for (int i = 0; i < 7; i++) {
         if (caliValues[i] == -1) {
           line_error += sensor_weights[i];
           count++;
