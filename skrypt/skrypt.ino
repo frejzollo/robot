@@ -7,6 +7,7 @@ int blackLevels[7]; //stany na linii
 int whiteLevels[7]; //stany na powierzchni
 int caliValues[7]; //skalibrowane
 int analogValues[7]; // wartosci z sensorow
+float sensor_weights[7] = {-4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0};
 
 int readErrorBlack = 7; // podloga
 int readErrorWhite = 7; // linia
@@ -21,11 +22,11 @@ bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 
 // Motor lewy
 const int ENL = 5;
-const int L2 = 3;
-const int L1 = 4; //z tym pinem serial nie działa, można zmienić jak zależy na debugu
+const int L2 = 7;
+const int L1 = 6; //z tym pinem serial nie działa, można zmienić jak zależy na debugu
 // Motor prawy
-const int ENR = 6; // ^ -||-
-const int R2 = 7;
+const int ENR = 10; // ^ -||-
+const int R2 = 9;
 const int R1 = 8;
 
 
@@ -85,12 +86,13 @@ void loop() {
 
   //mod 3: jazda
   if(mode == 3){
-    speedRatio = constrain(1 - float(analogRead(speedsetter))/690, 0, 1);
-    if(sumSensorsAnalog() < 10){ //stop gdy podniesiemy robota lub gdy najedzie prostopadle na linie!!
-      // leftMotor(0);
-      // rightMotor(0);
+    speedRatio = constrain(1 - float(analogRead(speedsetter))/150, 0, 1);
+    if(sumSensorsAnalog() < 70){ //stop gdy podniesiemy robota lub gdy najedzie prostopadle na linie!!
+      leftMotor(0);
+      rightMotor(0);
     }else{
-      //TUTAJ JAZDA
+      leftMotor(100);
+      rightMotor(100);
     }
   }
 
@@ -111,6 +113,55 @@ int sumSensorsAnalog(){
   }
   return x;
 }
+
+
+//------------------------------------------------------------------------------------------------------
+//SILNIKI
+
+//Silnik lewy
+void leftMotor(float speed) {
+  speed = constrain(speed, -255.0, 255.0);
+  speed = speed * speedRatio;
+  if (speed > 0) {
+    digitalWrite(L1, HIGH);
+    digitalWrite(L2, LOW);
+    analogWrite(ENL, int(speed));
+  } else if (speed < 0) {
+    digitalWrite(L1, LOW);
+    digitalWrite(L2, HIGH);
+    analogWrite(ENL, int(-speed));
+  } else {
+    digitalWrite(L1, LOW);
+    digitalWrite(L2, LOW);
+    analogWrite(ENL, 0);
+  }
+  delay(50);
+}
+
+//Silnik prawy
+void rightMotor(float speed) {
+  speed = constrain(speed, -255.0, 255.0);
+  speed = speed * speedRatio;
+  if (speed > 0) {
+    digitalWrite(R1, HIGH);
+    digitalWrite(R2, LOW);
+    analogWrite(ENR, int(speed));
+  } else if (speed < 0) {
+    digitalWrite(R1, LOW);
+    digitalWrite(R2, HIGH);
+    analogWrite(ENR, int(-speed));
+  } else {
+    digitalWrite(R1, LOW);
+    digitalWrite(R2, LOW);
+    analogWrite(ENR, 0);
+  }
+  delay(50);
+}
+
+
+
+
+
 
 
 //_______________________________________________________________________________________________
