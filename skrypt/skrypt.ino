@@ -91,7 +91,7 @@ void loop() {
       rightMotor(0);
     } else {
       // Nowe wagi sensorów (bez skrajnych sensorów)
-      float sensor_weights[7] = {-8.0, -6.0, -2.0, 0.0, 2.0, 6.0, 8.0};
+      float sensor_weights[7] = {-8.0, -7.0, -4.0, 0.0, 4.0, 7.0, 8.0};
 
       float line_error = 0.0;
       int count = 0;
