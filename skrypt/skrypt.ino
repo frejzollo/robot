@@ -5,8 +5,9 @@ void setup() {
 void loop() {
 basic_info();
 
-  // Pętla przez wszystkie wejścia analogowe A0 do A7
-  void basic_info()
+}
+
+void basic_info()
   {
   for (int i = 0; i <= 7; i++) {
     int value = analogRead(i);  // Odczyt z wejścia analogowego (A0 to 0, A1 to 1, ..., A7 to 7)
@@ -18,5 +19,4 @@ basic_info();
   }
   Serial.println();  // Nowa linia po wszystkich odczytach
   delay(500);        // Małe opóźnienie dla czytelności
-}
-}
+};
