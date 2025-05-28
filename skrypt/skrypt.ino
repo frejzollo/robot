@@ -7,7 +7,6 @@ int blackLevels[7]; //stany na linii
 int whiteLevels[7]; //stany na powierzchni
 int caliValues[7]; //skalibrowane
 int analogValues[7]; // wartosci z sensorow
-float sensor_weights[7] = {-4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0};
 
 int readErrorBlack = 7; // podloga
 int readErrorWhite = 7; // linia
@@ -84,17 +83,51 @@ void loop() {
     }
   }
 
-  //mod 3: jazda
-  if(mode == 3){
-    speedRatio = constrain(1 - float(analogRead(speedsetter))/150, 0, 1);
-    if(sumSensorsAnalog() < 70){ //stop gdy podniesiemy robota lub gdy najedzie prostopadle na linie!!
+//mod 3: jazda
+  if (mode == 3) {
+    if (sumSensorsAnalog() < 10) { // stop gdy robot nie widzi linii
       leftMotor(0);
       rightMotor(0);
-    }else{
-      leftMotor(100);
-      rightMotor(100);
-    }
-  }
+    } else {
+      speedRatio = constrain(1 - float(analogRead(speedsetter)) / 690.0, 0, 1);
+
+      // Nowe wagi sensorów (bez skrajnych sensorów)
+      float sensor_weights[7] = {-4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0};
+
+      float line_error = 0.0;
+      int count = 0;
+
+      for (int i = 0; i < 9; i++) {
+        if (caliValues[i] == -1) {
+          line_error += sensor_weights[i];
+          count++;
+        }
+      }
+
+      if (count > 0) {
+        line_error = line_error / count;
+      } else {
+        line_error = 0;
+      }
+
+      // Regulacja PD
+      static float last_error = 0;
+      float Kp = 35.0;
+      float Kd = 25.0;
+      float derivative = line_error - last_error;
+      float correction = Kp * line_error + Kd * derivative;
+      last_error = line_error;
+
+      // Dynamiczna prędkość w zależności od zakrętu
+      float base_speed = constrain(130.0 - abs(line_error) * 10.0, 80.0, 130.0);
+
+      float left_speed = base_speed + correction;
+      float right_speed = base_speed - correction;
+
+      leftMotor(left_speed);
+      rightMotor(right_speed);
+}
+}
 
   if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
     basicInfo();
