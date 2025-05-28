@@ -121,7 +121,7 @@ void loop() {
       last_error = line_error;
 
       // Dynamiczna prędkość w zależności od zakrętu
-      float base_speed = constrain(130.0 - abs(line_error) * 10.0, 80.0, 130.0);
+      float base_speed = constrain(80.0 - abs(line_error) * 10.0, 80.0, 130.0);
 
       float left_speed = base_speed + correction;
       float right_speed = base_speed - correction;
