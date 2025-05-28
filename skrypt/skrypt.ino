@@ -111,7 +111,7 @@ void loop() {
 
       // Regulacja PD
       static float last_error = 0;
-      float Kp = 45.0;
+      float Kp = 60.0;
       float Kd = 40.0;
       float derivative = line_error - last_error;
       float correction = Kp * line_error + Kd * derivative;
