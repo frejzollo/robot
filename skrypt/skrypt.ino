@@ -125,8 +125,8 @@ void loop() {
 
       leftMotor(left_speed);
       rightMotor(right_speed);
-      
-      delay(50);
+
+      delay(15);
 }
 }
 
