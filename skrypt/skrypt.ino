@@ -125,6 +125,8 @@ void loop() {
 
       leftMotor(left_speed);
       rightMotor(right_speed);
+      
+      delay(50);
 }
 }
 
@@ -167,7 +169,6 @@ void leftMotor(float speed) {
     digitalWrite(L2, LOW);
     analogWrite(ENL, 0);
   }
-  delay(50);
 }
 
 //Silnik prawy
@@ -187,7 +188,6 @@ void rightMotor(float speed) {
     digitalWrite(R2, LOW);
     analogWrite(ENR, 0);
   }
-  delay(50);
 }
 
 
