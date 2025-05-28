@@ -24,7 +24,7 @@ void loop() {
     for (int i = 0; i < 7; i++) {
     analogValues[i] = analogRead(analogPins[i]);
   }
-  //basic_info();
+  basicInfo();
 }
 
 //informacja na serial: stan guzika / wartość pokrętła / [wartości sensorów] / tryb pracy (mode)
