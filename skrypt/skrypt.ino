@@ -11,6 +11,7 @@ int analogValues[7]; // wartosci z sensorow
 int readErrorBlack = 7; // podloga
 int readErrorWhite = 7; // linia
 
+int iteration = 0; //ile razy wykonano pętle loop()
 
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
@@ -64,9 +65,15 @@ void loop() {
     }
   }
 
-  basicInfo();
-  //levelsInfo();
+  if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
+    //basicInfo();
+    //levelsInfo();
+  }
+
+  iteration += 1;
+  delay(10);
 }
+
 
 //informacja na serial: stan guzika / wartość pokrętła / [wartości sensorów] / tryb pracy (mode)
 void basicInfo(){
@@ -81,7 +88,6 @@ void basicInfo(){
   }
   Serial.print(mode);
   Serial.println();
-  delay(1000);
 }
 
 void levelsInfo(){
@@ -106,6 +112,5 @@ void levelsInfo(){
     Serial.print(caliValues[i]);
     Serial.print(i < 6 ? ", " : "] \n");
   }
-  delay(1000);
 
 }
