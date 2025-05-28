@@ -21,11 +21,11 @@ bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 
 
 // Motor lewy
-const int ENL = 10;
+const int ENL = 5;
 const int L2 = 7;
 const int L1 = 6; //z tym pinem serial nie działa, można zmienić jak zależy na debugu
 // Motor prawy
-const int ENR = 5; // ^ -||-
+const int ENR = 10; // ^ -||-
 const int R2 = 9;
 const int R1 = 8;
 
