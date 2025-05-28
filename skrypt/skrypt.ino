@@ -7,7 +7,7 @@ int blackLevels[7]; //stany na linii
 int whiteLevels[7]; //stany na powierzchni
 int caliValues[7]; //skalibrowane
 int analogValues[7]; // wartosci z sensorow
-float sensor_weights[7] = {-4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0};
+float sensor_weights[7] = {-8.0, -6.0, -2.0, 0.0, 2.0, 6.0, 8.0};
 
 int readErrorBlack = 7; // podloga
 int readErrorWhite = 7; // linia
