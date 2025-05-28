@@ -48,11 +48,11 @@ void setup(){ //wszystko co przed startem robota
   pinMode(R2, OUTPUT);
 
 //PWM setup
-  ledcSetup(pwmChannelL, pwmFreq, pwmResolution);
-  ledcAttachPin(ENL, pwmChannelL);
+//  ledcSetup(pwmChannelL, pwmFreq, pwmResolution);
+//  ledcAttachPin(ENL, pwmChannelL);
 
-  ledcSetup(pwmChannelR, pwmFreq, pwmResolution);
-  ledcAttachPin(ENR, pwmChannelR);
+//  ledcSetup(pwmChannelR, pwmFreq, pwmResolution);
+//  ledcAttachPin(ENR, pwmChannelR);
 
 }
 
