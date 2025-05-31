@@ -83,7 +83,7 @@ void execute_emergency_turn(lspeed,rspeed) {
  leftMotor(lspeed);
  rightMotor(rspeed);
 
-  delay(10); // czas obrotu awaryjnego (dopasuj)
+  delay(300); // czas obrotu awaryjnego (dopasuj)
 }
 
 //JAZDA________________________________________________________________
