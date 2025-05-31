@@ -1,6 +1,6 @@
 //HARDWARE_____________________________________________________________
 
-int sensorsNumber = 7;
+const int sensorsNumber = 7;
 int sensorsInAirValue = 70;
 int speedsetterMax = 150;
 bool isSpeedSetter = true;
@@ -181,7 +181,7 @@ void rightMotor(float speed) {
   lastSpeed = speed;
 }
 
-}
+
 
 //SETUP________________________________________________________________
 
