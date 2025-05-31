@@ -92,7 +92,7 @@ void execute_emergency_turn() {
     rightMotor(turn_speed);
   }
 
-  delay(300); // czas obrotu awaryjnego (dopasuj)
+  delay(10); // czas obrotu awaryjnego (dopasuj)
 }
 
 //JAZDA________________________________________________________________
@@ -109,7 +109,7 @@ void ride(){
     }
   }
 
-if(count > 0){
+if(count != 0 && count != 7){
   line_error = line_error / count;
 } else {
   // Nie widzimy linii – próbujemy wrócić na tor
@@ -238,16 +238,18 @@ void loop(){
   if(whiteCali && blackCali){
     for (int i = 0; i < sensorsNumber; i++) {
       if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
-        if(InvertLogic)
+        if(InvertLogic){
         caliValues[i] = 1;
-        else
-        caliValues[i] = -1;  
+        }else{
+        caliValues[i] = -1;
+        }  
       }
       else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
-        if(InvertLogic)
+        if(InvertLogic){
         caliValues[i] = -1;
-      else
+        }else{
       caliValues[i] = 1;
+        }
       }
       else{
         caliValues[i] = 0;
