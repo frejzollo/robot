@@ -207,6 +207,7 @@ void rightMotor(float speed) {
 //SETUP________________________________________________________________
 
 void setup(){
+  Serial.begin(9600)
 
   for (int i = 0; i < sensorsNumber; i++) {
     pinMode(analogPins[i], INPUT);
