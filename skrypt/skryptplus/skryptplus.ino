@@ -108,12 +108,13 @@ void ride(){
     }
   }
 
-  if(count > 0){
-    line_error = line_error / count;
-  }
-  else{
-    line_error = 0;
-  }
+if(count > 0){
+  line_error = line_error / count;
+} else {
+  // Nie widzimy linii – próbujemy wrócić na tor
+  execute_emergency_turn();
+  return; // kończymy ride() żeby nie jechał dalej
+}
 
   // Regulacja PD
   static float last_error = 0;
