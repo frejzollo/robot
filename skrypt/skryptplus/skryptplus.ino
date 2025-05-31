@@ -5,7 +5,6 @@ const int sensorsNumber = 7;
 int sensorsInAirValue = 70;
 int speedsetterMax = 150;
 bool isSpeedSetter = true;
-bool InvertLogic = true; 
 
 //BACK_EMF_____________________________________________________________
 bool doIGiveAFuck = true; //<------------------------------------------Jak false to wszystkie dodatkowe zabezpieczenia idą się jebać
@@ -58,7 +57,6 @@ int iteration = 0; //ile razy wykonano pętle loop()
 float speedRatio = 0;
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
-int last_known_direction = 1; // Dodatnia wartość = ostatnio w prawo, ujemna = w lewo
 
 //FUNKCJE_DODATKOWE____________________________________________________
 
@@ -80,21 +78,6 @@ void drop(int* A, int* B){
  
 
 //FUNKCJE_GŁÓWNE_______________________________________________________
-void execute_emergency_turn() {
-  int turn_speed = 100;
-
-  if (last_known_direction >= 0) {
-    // Obrót w prawo
-    leftMotor(turn_speed);
-    rightMotor(-turn_speed);
-  } else {
-    // Obrót w lewo
-    leftMotor(-turn_speed);
-    rightMotor(turn_speed);
-  }
-
-  delay(10); // czas obrotu awaryjnego (dopasuj)
-}
 
 //JAZDA________________________________________________________________
 
@@ -110,21 +93,17 @@ void ride(){
     }
   }
 
-if(count != 0 && count != 7){
-  line_error = line_error / count;
-} else {
-  // Nie widzimy linii – próbujemy wrócić na tor
-  execute_emergency_turn();
-  return; // kończymy ride() żeby nie jechał dalej
-}
+  if(count > 0){
+    line_error = line_error / count;
+  }
+  else{
+    line_error = 0;
+  }
 
   // Regulacja PD
   static float last_error = 0;
   float derivative = line_error - last_error;
   float correction = Kp * line_error + Kd * derivative;
-    if (line_error != 0) {
-    last_known_direction = (line_error > 0) ? 1 : -1;
-  }
   last_error = line_error;
 
   // Dynamiczna prędkość w zależności od zakrętu
@@ -208,7 +187,6 @@ void rightMotor(float speed) {
 //SETUP________________________________________________________________
 
 void setup(){
-  Serial.begin(9600);
 
   for (int i = 0; i < sensorsNumber; i++) {
     pinMode(analogPins[i], INPUT);
@@ -239,18 +217,10 @@ void loop(){
   if(whiteCali && blackCali){
     for (int i = 0; i < sensorsNumber; i++) {
       if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
-        if(InvertLogic){
-        caliValues[i] = 1;
-        }else{
         caliValues[i] = -1;
-        }  
       }
       else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
-        if(InvertLogic){
-        caliValues[i] = -1;
-        }else{
-      caliValues[i] = 1;
-        }
+        caliValues[i] = 1;
       }
       else{
         caliValues[i] = 0;
@@ -293,7 +263,7 @@ void loop(){
 
   if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
     //basicInfo();
-    levelsInfo();
+    //levelsInfo();
   }
   iteration += 1;
   delay(loopDelay);
