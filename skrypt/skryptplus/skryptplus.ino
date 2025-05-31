@@ -16,7 +16,7 @@ float Kp = 60.0;
 float Kd = 40.0;
 float baseSpeedMax = 130.0;
 float baseSpeedMin = 80.0;
-float sensor_weights[sensorsNumber] = {-12.0, -9.0, -4.0, 0.0, 4.0, 9.0, 12.0};
+float sensor_weights[sensorsNumber] = {-12.0, -4.0, -1.0, 0.0, 1.0, 4.0, 12.0};
 int loopDelay = 10;
 int inRideDelay = 15;
 
