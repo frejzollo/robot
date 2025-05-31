@@ -56,6 +56,7 @@ int iteration = 0; //ile razy wykonano pętle loop()
 float speedRatio = 0;
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
+int last_known_direction = 1; // Dodatnia wartość = ostatnio w prawo, ujemna = w lewo
 
 //FUNKCJE_DODATKOWE____________________________________________________
 
@@ -77,6 +78,21 @@ void drop(int* A, int* B){
  
 
 //FUNKCJE_GŁÓWNE_______________________________________________________
+void execute_emergency_turn() {
+  int turn_speed = 100;
+
+  if (last_known_direction >= 0) {
+    // Obrót w prawo
+    leftMotor(turn_speed);
+    rightMotor(-turn_speed);
+  } else {
+    // Obrót w lewo
+    leftMotor(-turn_speed);
+    rightMotor(turn_speed);
+  }
+
+  delay(300); // czas obrotu awaryjnego (dopasuj)
+}
 
 //JAZDA________________________________________________________________
 
@@ -103,6 +119,9 @@ void ride(){
   static float last_error = 0;
   float derivative = line_error - last_error;
   float correction = Kp * line_error + Kd * derivative;
+    if (line_error != 0) {
+    last_known_direction = (line_error > 0) ? 1 : -1;
+  }
   last_error = line_error;
 
   // Dynamiczna prędkość w zależności od zakrętu
