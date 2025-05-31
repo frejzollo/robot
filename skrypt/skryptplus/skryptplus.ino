@@ -217,10 +217,10 @@ void loop(){
   if(whiteCali && blackCali){
     for (int i = 0; i < sensorsNumber; i++) {
       if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
-        caliValues[i] = -1;
+        caliValues[i] = 1;
       }
       else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
-        caliValues[i] = 1;
+        caliValues[i] = -1;
       }
       else{
         caliValues[i] = 0;
