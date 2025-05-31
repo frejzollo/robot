@@ -1,6 +1,6 @@
 //HARDWARE_____________________________________________________________
 
-int sensorsNumber = 7;
+const int sensorsNumber = 7;
 int sensorsInAirValue = 70;
 int speedsetterMax = 150;
 bool isSpeedSetter = true;
@@ -332,9 +332,9 @@ void levelsInfo(){
 #include <SPI.h>
 #include <WiFiNINA.h>
 
-const char* ssid     = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
-const char* serverIP = "192.168.1.100";
+const char* ssid     = "T-Mobile_Swiatlowod_1387";
+const char* password = "19803070215973499441";
+const char* serverIP = "192.168.1.45";
 const int   serverPort = 80;
 const char* path = "/data.json";
 
