@@ -109,7 +109,7 @@ void ride(){
     }
   }
 
-if(count > 0){
+if(count != 0 && count != 7){
   line_error = line_error / count;
 } else {
   // Nie widzimy linii – próbujemy wrócić na tor
