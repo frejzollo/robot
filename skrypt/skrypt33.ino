@@ -16,15 +16,26 @@ float Kp = 60.0;
 float Kd = 40.0;
 float baseSpeedMax = 130.0;
 float baseSpeedMin = 80.0;
-float sensor_weights[sensorsNumber] = {-12.0, -9.0, -4.0, 0.0, 4.0, 9.0, 12.0};
+float sensorWeights[sensorsNumber] = {-12.0, -9.0, -4.0, 0.0, 4.0, 9.0, 12.0};
 int loopDelay = 10;
 int inRideDelay = 15;
 
 //PINY_________________________________________________________________
 
-const int speedsetter = A0; //do wyjebania
-const int button = 13;
-int analogPins[sensorsNumber] = {A1, A2, A3, A4, A5, A6, A7};
+const int button = 13;  // Digital input button pin
+const int speedsetter = A0;
+int analogPins[sensorsNumber] = {A1, A2, A3, A4, A5, A6, A7}; // 8 analog inputs available
+
+// Motor left
+const int ENL = 5;  // PWM capable pin for motor speed (enable)
+const int L1 = 6;   // Digital output pin for motor direction
+const int L2 = 7;   // Digital output pin for motor direction
+
+// Motor right
+const int ENR = 10; // PWM capable pin for motor speed (enable)
+const int R1 = 8;   // Digital output pin for motor direction
+const int R2 = 9;   // Digital output pin for motor direction
+
 
 //TABLICE WARTOŚCI SENSORÓW____________________________________________
 
@@ -79,7 +90,7 @@ void ride(){
 
   for(int i = 0; i < sensorsNumber; i++){
     if(caliValues[i] == -1){
-      line_error += sensor_weights[i];
+      line_error += sensorWeights[i];
       count++;
     }
   }
@@ -254,7 +265,9 @@ void loop(){
 
   //mod 4: zmiana ustawień softu
   if(mode == 4){
-
+    connectToWiFi();
+    fetchData();
+    disconnectWiFi();
   }
 
   //mod 5: powrót do mod 3
@@ -312,3 +325,119 @@ void levelsInfo(){
   }
 
 }
+
+
+//WIFI__________________________________________________________________
+
+#include <SPI.h>
+#include <WiFiNINA.h>
+
+const char* ssid     = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
+const char* serverIP = "192.168.1.100";
+const int   serverPort = 80;
+const char* path = "/data.json";
+
+WiFiClient client;
+
+void connectToWiFi() {
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+}
+
+void disconnectWiFi() {
+  WiFi.disconnect();
+}
+
+bool fetchData() {
+  if (!client.connect(serverIP, serverPort)) {
+    return false;
+  }
+
+  client.print(String("GET ") + path + " HTTP/1.1\r\n" +
+               "Host: " + serverIP + "\r\n" +
+               "Connection: close\r\n\r\n");
+
+  // Skip headers
+  while (client.connected()) {
+    String line = client.readStringUntil('\n');
+    if (line == "\r") break;
+  }
+
+  // Read body
+  String payload = "";
+  while (client.available()) {
+    payload += (char)client.read();
+  }
+  client.stop();
+
+  // === Parse scalars ===
+  int idx;
+
+  idx = payload.indexOf("Kp");
+  if (idx != -1) {
+    int start = payload.indexOf(':', idx) + 1;
+    int end = payload.indexOf(',', idx);
+    Kp = payload.substring(start, end).toInt();
+  }
+
+  idx = payload.indexOf("Kd");
+  if (idx != -1) {
+    int start = payload.indexOf(':', idx) + 1;
+    int end = payload.indexOf(',', idx);
+    Kd = payload.substring(start, end).toFloat();
+  }
+
+  idx = payload.indexOf("baseSpeedMax");
+  if (idx != -1) {
+    int start = payload.indexOf(':', idx) + 1;
+    int end = payload.indexOf(',', idx);
+    baseSpeedMax = payload.substring(start, end).toFloat();
+  }
+
+  idx = payload.indexOf("baseSpeedMin");
+  if (idx != -1) {
+    int start = payload.indexOf(':', idx) + 1;
+    int end = payload.indexOf(',', idx);
+    baseSpeedMin = payload.substring(start, end).toFloat();
+  }
+
+  idx = payload.indexOf("loopDelay");
+  if (idx != -1) {
+    int start = payload.indexOf(':', idx) + 1;
+    int end = payload.indexOf(',', idx);
+    loopDelay = payload.substring(start, end).toFloat();
+  }
+
+  idx = payload.indexOf("inRideDelay");
+  if (idx != -1) {
+    int start = payload.indexOf(':', idx) + 1;
+    int end = payload.indexOf('}', idx);
+    inRideDelay = payload.substring(start, end).toFloat();
+  }
+
+  idx = payload.indexOf("sensorWeights");
+  if (idx != -1) {
+    int start = payload.indexOf('[', idx);
+    int end = payload.indexOf(']', start);
+  if (start != -1 && end != -1) {
+    String arrayStr = payload.substring(start + 1, end);
+    arrayStr.trim();
+
+    for (int i = 0; i < sensorsNumber && arrayStr.length() > 0; i++) {
+      int comma = arrayStr.indexOf(',');
+      String val = (comma == -1) ? arrayStr : arrayStr.substring(0, comma);
+      sensorWeights[i] = val.toFloat();
+      if (comma == -1) break;
+      arrayStr = arrayStr.substring(comma + 1);
+      arrayStr.trim();
+    }
+  }
+}
+
+
+  return true;
+}
+

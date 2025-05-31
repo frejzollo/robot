@@ -25,6 +25,14 @@ int inRideDelay = 15;
 const int speedsetter = A0; //do wyjebania
 const int button = 13;
 int analogPins[sensorsNumber] = {A1, A2, A3, A4, A5, A6, A7};
+//Motor lewy
+const int ENL = 5;
+const int L2 = 7;
+const int L1 = 6;
+//Motor prawy
+const int ENR = 10;
+const int R2 = 9;
+const int R1 = 8;
 
 //TABLICE WARTOŚCI SENSORÓW____________________________________________
 
