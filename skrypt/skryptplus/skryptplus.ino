@@ -79,18 +79,26 @@ void drop(int* A, int* B){
  
 
 //FUNKCJE_GŁÓWNE_______________________________________________________
-void execute_emergency_turn(lspeed,rspeed) {
- leftMotor(lspeed);
- rightMotor(rspeed);
+void execute_emergency_turn() {
+  int turn_speed = 160;
 
-  delay(10); // czas obrotu awaryjnego (dopasuj)
+  if (last_known_direction >= 0) {
+    // Obrót w prawo
+    leftMotor(turn_speed);
+    rightMotor(-turn_speed);
+  } else {
+    // Obrót w lewo
+    leftMotor(-turn_speed);
+    rightMotor(turn_speed);
+  }
+
+  delay(300); // czas obrotu awaryjnego (dopasuj)
 }
 
 //JAZDA________________________________________________________________
 
 void ride(){
-  static float left_speed = 0;
-  static float right_speed = 0;
+
   float line_error = 0.0;
   int count = 0;
 
@@ -101,11 +109,11 @@ void ride(){
     }
   }
 
-if(count != 0 && count != 7){
+if(count > 0){
   line_error = line_error / count;
 } else {
   // Nie widzimy linii – próbujemy wrócić na tor
-  execute_emergency_turn(left_speed,right_speed);
+  execute_emergency_turn();
   return; // kończymy ride() żeby nie jechał dalej
 }
 
@@ -121,8 +129,8 @@ if(count != 0 && count != 7){
   // Dynamiczna prędkość w zależności od zakrętu
   float base_speed = constrain(baseSpeedMax - abs(line_error) * 10.0, baseSpeedMin, baseSpeedMax);
 
-  left_speed = base_speed + correction;
-  right_speed = base_speed - correction;
+  float left_speed = base_speed + correction;
+  float right_speed = base_speed - correction;
 
   leftMotor(left_speed);
   rightMotor(right_speed);
@@ -230,18 +238,16 @@ void loop(){
   if(whiteCali && blackCali){
     for (int i = 0; i < sensorsNumber; i++) {
       if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
-        if(InvertLogic){
+        if(InvertLogic)
         caliValues[i] = 1;
-        }else{
-        caliValues[i] = -1;
-        }  
+        else
+        caliValues[i] = -1;  
       }
       else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
-        if(InvertLogic){
+        if(InvertLogic)
         caliValues[i] = -1;
-        }else{
+      else
       caliValues[i] = 1;
-        }
       }
       else{
         caliValues[i] = 0;
