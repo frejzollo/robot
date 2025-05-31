@@ -20,6 +20,8 @@ float baseSpeedMin = 80.0;
 float sensor_weights[sensorsNumber] = {-12.0, -4.0, -1.0, 0.0, 1.0, 4.0, 12.0};
 int loopDelay = 10;
 int inRideDelay = 15;
+int LastKnowDirection = 0;
+
 
 //PINY_________________________________________________________________
 
@@ -75,9 +77,29 @@ void drop(int* A, int* B){
     B[i] = analogRead(A[i]);
   }
 }
- 
+
+int sumCaliValues(){
+  int x = 0;
+  for(int i = 0; i < sensorsNumber; i++){
+    x += caliValues[i];
+  }
+  return x;
+} 
 
 //FUNKCJE_GŁÓWNE_______________________________________________________
+void EmergencyTurn()
+{
+  int turnSpeed = 150;
+  if(LastKnowDirection == 1)
+  {
+    rightMotor(-turnSpeed);
+    leftMotor(turnSpeed);
+  }
+  else{
+  rightMotor(turnSpeed);
+  leftMotor(-turnSpeed);
+  }
+}
 
 //JAZDA________________________________________________________________
 
@@ -112,9 +134,21 @@ void ride(){
   float left_speed = base_speed + correction;
   float right_speed = base_speed - correction;
 
+  if(correction < 0){
+  LastKnowDirection= -1; 
+  }
+  else
+  {
+    LastKnowDirection = 1;
+  }
+
+  if(sumCaliValues == -7){
+    EmergencyTurn();
+  }
+  else{
   leftMotor(left_speed);
   rightMotor(right_speed);
-
+  }
   delay(inRideDelay);
 }
 
