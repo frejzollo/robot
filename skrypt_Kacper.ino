@@ -1,24 +1,9 @@
+//Hardware - PINY
+//--------------------------------------------------------------------------------------------------
 const int speedsetter = A0;
 const int button = 13;
 int mode=0;
-
 int analogPins[7] = {A1, A2, A3, A4, A5, A6, A7};
-int blackLevels[7]; //stany na linii
-int whiteLevels[7]; //stany na powierzchni
-int caliValues[7]; //skalibrowane
-int analogValues[7]; // wartosci z sensorow
-
-int readErrorBlack = 7; // podloga
-int readErrorWhite = 7; // linia
-
-//-----------------------------------------------------------------------------------
-// Wartości pomocnicze
-int iteration = 0; //ile razy wykonano pętle loop()
-float speedRatio = 0;
-bool blackCali = false; //czy skalibrowano sensory na linie
-bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
-
-
 // Motor lewy
 const int ENL = 5;
 const int L2 = 7;
@@ -27,8 +12,154 @@ const int L1 = 6; //z tym pinem serial nie działa, można zmienić jak zależy 
 const int ENR = 10; // ^ -||-
 const int R2 = 9;
 const int R1 = 8;
+//BACK_EMF
+bool doIGiveAFuck = true; //<------------------------------------------Jak false to wszystkie dodatkowe zabezpieczenia idą się jebać
+int safetySpeedChange = 50;
+int backEMFDelay = 30;
+
+//SOFT
+//----------------------------------------------------------------------------------------------------
+// Wartości pomocnicze
+int iteration = 0; //ile razy wykonano pętle loop()
+float speedRatio = 0;
+float Kp = 45.0;
+float Kd = 30.0;
+static float last_error = 0;
+bool blackCali = false; //czy skalibrowano sensory na linie
+bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
+bool InvertLogic = true; //linia biala-true , linia czarna-false  
+int LastKnowDirection = 0;
+
+// tabilce z czujnikami
+int blackLevels[7]; //stany na linii
+int whiteLevels[7]; //stany na powierzchni
+int caliValues[7]; //skalibrowane
+int analogValues[7]; // wartosci z sensorow
+
+//zakresy Bledow
+int readErrorBlack = 7; // podloga
+int readErrorWhite = 7; // linia
+
+// SOFT - FUNKCJE
+//------------------------------------------------------------------------------------------------------
+//SILNIKI
+
+//Silnik lewy
+void leftMotor(float speed) {
+
+  static float lastSpeed = 0;
+  speed = constrain(speed, -255.0, 255.0);
+  speed = speed * speedRatio;
+
+  if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
+    digitalWrite(L1, HIGH);
+    digitalWrite(L2, HIGH);
+    delay(backEMFDelay);
+  }
+
+  if(speed > 0){
+    digitalWrite(L1, HIGH);
+    digitalWrite(L2, LOW);
+    analogWrite(ENL, int(speed));
+  }
+  else if(speed < 0){
+    digitalWrite(L1, LOW);
+    digitalWrite(L2, HIGH);
+    analogWrite(ENL, int(-speed));
+  }
+  else{
+    digitalWrite(L1, LOW);
+    digitalWrite(L2, LOW);
+    analogWrite(ENL, 0);
+  }
+
+  lastSpeed = speed;
+}
+
+//Silnik prawy
+void rightMotor(float speed) {
+
+  static float lastSpeed = 0;
+  speed = constrain(speed, -255.0, 255.0);
+  speed = speed * speedRatio;
+
+  if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
+    digitalWrite(R1, HIGH);
+    digitalWrite(R2, HIGH);
+    delay(backEMFDelay);
+  }
+  if(speed > 0){
+    digitalWrite(R1, HIGH);
+    digitalWrite(R2, LOW);
+    analogWrite(ENR, int(speed));
+  }
+  else if(speed < 0){
+    digitalWrite(R1, LOW);
+    digitalWrite(R2, HIGH);
+    analogWrite(ENR, int(-speed));
+  }
+  else{
+    digitalWrite(R1, LOW);
+    digitalWrite(R2, LOW);
+    analogWrite(ENR, 0);
+  }
+
+  lastSpeed = speed;
+}
+
+//Funkcje Pomocnicze
+//----------------------------------------------------------------------------------------------------
+int sumCaliValues(){
+  int x = 0;
+  for(int i = 0; i < sensorsNumber; i++){
+    x += caliValues[i];
+  }
+  return x;
+} 
+
+//FUNKCJE_GŁÓWNE
+//-----------------------------------------------------------------------------------------------------
+void EmergencyTurn()
+{
+  int turnSpeed = 150;
+  if(LastKnowDirection == 1)
+  {
+    rightMotor(-turnSpeed);
+    leftMotor(turnSpeed);
+  }
+  else{
+  rightMotor(turnSpeed);
+  leftMotor(-turnSpeed);
+  }
+}
+
+void ride()
+{
+      float derivative = line_error - last_error;
+      float correction = Kp * line_error + Kd * derivative;
+      last_error = line_error;
+
+      // Dynamiczna prędkość w zależności od zakrętu
+      float base_speed = constrain(130.0 - abs(line_error) * 10.0, 80.0, 130.0);
+
+      float left_speed = base_speed + correction;
+      float right_speed = base_speed - correction;
+
+      if(){
+
+      }
+      else{
+      leftMotor(left_speed);
+      rightMotor(right_speed);
+      }
+      delay(15);
+}
 
 
+
+
+//SETUP
+//----------------------------------------------------------------------------------------------------
 void setup() {
   Serial.begin(9600);  // Uruchomienie komunikacji szeregowej
   for (int i = 0; i < 7; i++) {
@@ -147,53 +278,6 @@ int sumSensorsAnalog(){
   }
   return x;
 }
-
-
-//------------------------------------------------------------------------------------------------------
-//SILNIKI
-
-//Silnik lewy
-void leftMotor(float speed) {
-  speed = constrain(speed, -255.0, 255.0);
-  speed = speed * speedRatio;
-  if (speed > 0) {
-    digitalWrite(L1, HIGH);
-    digitalWrite(L2, LOW);
-    analogWrite(ENL, int(speed));
-  } else if (speed < 0) {
-    digitalWrite(L1, LOW);
-    digitalWrite(L2, HIGH);
-    analogWrite(ENL, int(-speed));
-  } else {
-    digitalWrite(L1, LOW);
-    digitalWrite(L2, LOW);
-    analogWrite(ENL, 0);
-  }
-}
-
-//Silnik prawy
-void rightMotor(float speed) {
-  speed = constrain(speed, -255.0, 255.0);
-  speed = speed * speedRatio;
-  if (speed > 0) {
-    digitalWrite(R1, HIGH);
-    digitalWrite(R2, LOW);
-    analogWrite(ENR, int(speed));
-  } else if (speed < 0) {
-    digitalWrite(R1, LOW);
-    digitalWrite(R2, HIGH);
-    analogWrite(ENR, int(-speed));
-  } else {
-    digitalWrite(R1, LOW);
-    digitalWrite(R2, LOW);
-    analogWrite(ENR, 0);
-  }
-}
-
-
-
-
-
 
 
 //_______________________________________________________________________________________________
