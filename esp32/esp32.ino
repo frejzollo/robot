@@ -1,7 +1,8 @@
 //przypisanie pinów ESP do hardwaru
+const int sensorNumber = 7;
 const int speedsetter = 39; //pokrętło
 const int button = 36; //guzik
-const int analogPins[9] = {13, 14, 27, 26, 25, 33, 32, 35, 34}; //sensory patrząc z góry od lewej do prawej
+const int analogPins[sensorNumber] = {34, 35, 32, 33, 25, 26, 27}; //sensory patrząc z góry od lewej do prawej
 // Motor lewy
 const int ENL = 23;
 const int L2 = 22;
@@ -11,10 +12,10 @@ const int ENR = 21; // ^ -||-
 const int R2 = 19;
 
 //wartości sensorów
-int analogValues[9]; //analogowe
-int blackLevels[9]; //stany na linii
-int whiteLevels[9]; //stany na powierzchni
-int caliValues[9]; //skalibrowane
+int analogValues[sensorNumber]; //analogowe
+int blackLevels[sensorNumber]; //stany na linii
+int whiteLevels[sensorNumber]; //stany na powierzchni
+int caliValues[sensorNumber]; //skalibrowane
 
 //wartości pomocnicze
 int mode = 0; //tryb pracy
@@ -24,12 +25,12 @@ bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 
 //dopuszczalne błędy odczytu sensorów
-int readErrorBlack = 10; //linia
+int readErrorBlack = 20; //linia
 int readErrorWhite = 50; //powierzchnia
 
 //PWM
 const int pwmFreq = 1000;
-const int pwmResolution = 8;
+const int pwmResolution = sensorNumber-1;
 const int pwmChannelL = 0;
 const int pwmChannelR = 1;
 
@@ -39,7 +40,7 @@ void setup(){ //wszystko co przed startem robota
   Serial.begin(115200); //uruchomienie serialu w celu dostarczaniu informacji przez USB
   delay(1000);
 //przypisanie ról I/O do pinów
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < sensorNumber; i++) {
     pinMode(analogPins[i], INPUT);
   }
   pinMode(speedsetter, INPUT);
@@ -59,7 +60,7 @@ void setup(){ //wszystko co przed startem robota
 void loop() {
 
 //Zczytywanie wartości czujników
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < sensorNumber; i++) {
     analogValues[i] = analogRead(analogPins[i]);
   }
 
@@ -72,7 +73,7 @@ void loop() {
 
 //mod 1: jednorazowe zczytanie aktualnych odczytów czujników i przypisanie ich jako wartości odpowiadających linii
   if(mode == 1 && !blackCali){
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < sensorNumber; i++) {
       blackLevels[i] = analogRead(analogPins[i]);
     }
     blackCali = true;
@@ -80,7 +81,7 @@ void loop() {
 
 //mod 2: jednorazowe zczytanie aktualnych odczytów czujników i przypisanie ich jako wartości odpowiadających powierzchni
   if(mode == 2 && !whiteCali){
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < sensorNumber; i++) {
       whiteLevels[i] = analogRead(analogPins[i]);
     }
     whiteCali = true;
@@ -88,7 +89,7 @@ void loop() {
 
 //zczytywanie wartości czujników po kalibracji: powierzchnia = 1, linia = -1, niepewny odczyt = 0
   if(whiteCali && blackCali){
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < sensorNumber; i++) {
       if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
         caliValues[i] = -1;
       } else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ // or dlatego, że kalibracja mogła być w cieniu czy coś tam...}
@@ -108,12 +109,12 @@ void loop() {
       speedRatio = constrain(1 - float(analogRead(speedsetter)) / 690.0, 0, 1);
 
       // Nowe wagi sensorów (bez skrajnych sensorów)
-      float sensor_weights[9] = {0.0, -4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0, 0.0};
+      float sensor_weights[sensorNumber] = {-4.0, -3.0, -1.0, 0.0, 1.0, 3.0, 4.0};
 
       float line_error = 0.0;
       int count = 0;
 
-      for (int i = 0; i < 9; i++) {
+      for (int i = 0; i < sensorNumber; i++) {
         if (caliValues[i] == -1) {
           line_error += sensor_weights[i];
           count++;
@@ -135,7 +136,7 @@ void loop() {
       last_error = line_error;
 
       // Dynamiczna prędkość w zależności od zakrętu
-      float base_speed = constrain(130.0 - abs(line_error) * 10.0, 80.0, 130.0);
+      float base_speed = constrain(130.0 - abs(line_error) * 10.0, sensorNumber-10.0, 130.0);
 
       float left_speed = base_speed + correction;
       float right_speed = base_speed - correction;
@@ -149,7 +150,7 @@ void loop() {
 
 
   if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
-    //basicInfo();
+    basicInfo();
     //levelsInfo();
   }
 
@@ -221,7 +222,7 @@ void rightMotor(float speed) {
 //suma analogowych wartości czujników 
 int sumSensorsAnalog(){
   int x = 0;
-  for(int i = 0; i < 9; i++){
+  for(int i = 0; i < sensorNumber; i++){
     x += analogValues[i];
   }
   return x;
@@ -230,7 +231,7 @@ int sumSensorsAnalog(){
 //suma zkalibrowanych wartości czujników 
 int sumSensors(){
   int x = 0;
-  for(int i = 0; i < 9; i++){
+  for(int i = 0; i < sensorNumber; i++){
     x += caliValues[i];
   }
   return x;
@@ -240,24 +241,24 @@ int sumSensors(){
 void levelsInfo(){
 
   Serial.print("[");
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < sensorNumber; i++) {
     Serial.print(analogValues[i]);
-    Serial.print(i < 8 ? ", " : "] / ");
+    Serial.print(i < sensorNumber-1 ? ", " : "] / ");
   }
   Serial.print("[");
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < sensorNumber; i++) {
     Serial.print(blackLevels[i]);
-    Serial.print(i < 8 ? ", " : "] / ");
+    Serial.print(i < sensorNumber-1 ? ", " : "] / ");
   }
   Serial.print("[");
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < sensorNumber; i++) {
     Serial.print(whiteLevels[i]);
-    Serial.print(i < 8 ? ", " : "] / ");
+    Serial.print(i < sensorNumber-1 ? ", " : "] / ");
   }
   Serial.print("[");
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < sensorNumber; i++) {
     Serial.print(caliValues[i]);
-    Serial.print(i < 8 ? ", " : "] \n");
+    Serial.print(i < sensorNumber-1 ? ", " : "] \n");
   }
 
 }
@@ -273,9 +274,9 @@ void basicInfo(){
   Serial.print(" / ");
   Serial.print(analogRead(speedsetter));
   Serial.print(" / [");
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < sensorNumber; i++) {
     Serial.print(analogValues[i]);
-    Serial.print(i < 8 ? ", " : "] / ");
+    Serial.print(i < sensorNumber-1 ? ", " : "] / ");
   }
   Serial.print(mode);
   Serial.println();
