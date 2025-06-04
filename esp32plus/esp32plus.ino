@@ -24,13 +24,13 @@ int inRideDelay = 15;
 
 // Motor lewy
 const int ENL = 23;
-const int L2 =  4; //1;
-const int L1 = 12; //22;
+const int L2 =  1;
+const int L1 = 22;
 
 // Motor prawy
 const int ENR = 19; // ^ -||-
-const int R2 = 2; //3;
-const int R1 =  13;//21;
+const int R2 = 3;
+const int R1 =21;
 
 const int speedsetter = 39; //do wyjebania
 const int button = 36;
@@ -193,7 +193,6 @@ void rightMotor(float speed) {
 //SETUP________________________________________________________________
 
 void setup(){
-  Serial.begin(9600);
   for (int i = 0; i < sensorsNumber; i++) {
     pinMode(analogPins[i], INPUT);
   }
@@ -212,8 +211,8 @@ void setup(){
 
   ledcSetup(pwmChannelR, pwmFreq, pwmResolution);
   ledcAttachPin(ENR, pwmChannelR);
-  // leftMotor(255);
-  // rightMotor(255);
+  leftMotor(255);
+  rightMotor(255);
 }
 
 //LOOP_________________________________________________________________
@@ -279,7 +278,7 @@ void loop(){
 
   if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
     //basicInfo();
-    levelsInfo();
+    //levelsInfo();
   }
   iteration += 1;
   delay(loopDelay);
