@@ -2,7 +2,7 @@
 const int sensorsNumber = 7;
 int sensorsInAirValue = 5;
 int speedsetterMax = 650;
-bool isSpeedSetter = true;
+bool isSpeedSetter = false;
 
 
 //BACK_EMF_____________________________________________________________
@@ -12,10 +12,10 @@ int backEMFDelay = 30;
 
 //SOFTWARE_____________________________________________________________
 
-float Kp = 60.0;
-float Kd = 40.0;
-float baseSpeedMax = 130.0;
-float baseSpeedMin = 80.0;
+float Kp = 40.0;
+float Kd = 25.0;
+float baseSpeedMax = 80.0;
+float baseSpeedMin = 30.0;
 float sensor_weights[sensorsNumber] = {-12.0, -9.0, -4.0, 0.0, 4.0, 9.0, 12.0};
 int loopDelay = 10;
 int inRideDelay = 15;
@@ -61,7 +61,7 @@ const int pwmChannelR = 1;
 //WARTOŚCI_POMOCNICZE__________________________________________________
 
 int iteration = 0; //ile razy wykonano pętle loop()
-float speedRatio = 1;
+float speedRatio = 0;
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 
@@ -95,7 +95,7 @@ void ride(){
 
   for(int i = 0; i < sensorsNumber; i++){
     if(caliValues[i] == -1){
-      line_error += sensor_weights[i];
+      line_error -= sensor_weights[i];
       count++;
     }
   }
@@ -211,8 +211,6 @@ void setup(){
 
   ledcSetup(pwmChannelR, pwmFreq, pwmResolution);
   ledcAttachPin(ENR, pwmChannelR);
-  leftMotor(255);
-  rightMotor(255);
 }
 
 //LOOP_________________________________________________________________
@@ -270,9 +268,7 @@ void loop(){
       rightMotor(0);
     }
     else{
-      //ride();
-      leftMotor(100);
-      rightMotor(100);
+      ride();
     }
   }
 
