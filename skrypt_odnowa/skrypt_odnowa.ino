@@ -16,7 +16,7 @@ const int R1 = 8;
 
 //HARDWARE - ZMIENNE
 //---------------------------------------------------------------------------------------------------
-const int sensorsNumber = 7;
+const int sensorNumber = 7;
 int sensorsInAirValue = 70;
 int speedsetterMax = 150;
 bool isSpeedSetter = true;
@@ -30,14 +30,14 @@ int backEMFDelay = 30;
 //----------------------------------------------------------------------------------------------------
 // Wartości pomocnicze
 int iteration = 0; //ile razy wykonano pętle loop()
+int speedRatio = 100;
+int loopDelay = 100;
 
 
 // tabilce z czujnikami
-int blackLevels[7]; //stany na linii
-int whiteLevels[7]; //stany na powierzchni
-int caliValues[7]; //skalibrowane
-int analogValues[7]; // wartosci z sensorow
-float sensor_weights[sensorsNumber] = {-12.0, -4.0, -1.0, 0.0, 1.0, 4.0, 12.0};
+int caliValues[sensorNumber]; //skalibrowane
+int analogValues[sensorNumber]; // wartosci z sensorow
+float sensor_weights[sensorNumber] = {-12.0, -4.0, -1.0, 0.0, 1.0, 4.0, 12.0};
 
 // do odczytu czujnikow
 bool blackCali = false; //czy skalibrowano sensory na linie
@@ -123,8 +123,6 @@ void rightMotor(float speed) {
 
 //Funkcje Pomocnicze
 //----------------------------------------------------------------------------------------------------
-i
-
 
 //SETUP
 //----------------------------------------------------------------------------------------------------
@@ -144,12 +142,8 @@ void setup() {
 }
 
 void loop(){
+  Serial.println(analogRead(A2));
 
-  if(iteration % 100 == 0){ //wykonuje się z okresem = 100*(czas potrzebny na wykonanie wszystkiego w loop)
-    basicInfo();
-    //levelsInfo();
-  }
-  iteration += 1;
   delay(loopDelay);
 }
 
@@ -172,27 +166,26 @@ void basicInfo(){
   Serial.println();
 }
 
-void levelsInfo(){
+// void levelsInfo(){
 
-  Serial.print("[");
-  for (int i = 0; i < 7; i++) {
-    Serial.print(analogValues[i]);
-    Serial.print(i < 6 ? ", " : "] / ");
-  }
-  Serial.print("[");
-  for (int i = 0; i < 7; i++) {
-    Serial.print(blackLevels[i]);
-    Serial.print(i < 6 ? ", " : "] / ");
-  }
-  Serial.print("[");
-  for (int i = 0; i < 7; i++) {
-    Serial.print(whiteLevels[i]);
-    Serial.print(i < 6 ? ", " : "] / ");
-  }
-  Serial.print("[");
-  for (int i = 0; i < 7; i++) {
-    Serial.print(caliValues[i]);
-    Serial.print(i < 6 ? ", " : "] \n");
-  }
+//   Serial.print("[");
+//   for (int i = 0; i < 7; i++) {
+//     Serial.print(analogValues[i]);
+//     Serial.print(i < 6 ? ", " : "] / ");
+//   }
+//   Serial.print("[");
+//   for (int i = 0; i < 7; i++) {
+//     Serial.print(blackLevels[i]);
+//     Serial.print(i < 6 ? ", " : "] / ");
+//   }
+//   Serial.print("[");
+//   for (int i = 0; i < 7; i++) {
+//     Serial.print(whiteLevels[i]);
+//     Serial.print(i < 6 ? ", " : "] / ");
+//   }
+//   Serial.print("[");
+//   for (int i = 0; i < 7; i++) {
+//     Serial.print(caliValues[i]);
+//     Serial.print(i < 6 ? ", " : "] \n");
+//   }
 
-}
