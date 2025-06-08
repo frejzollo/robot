@@ -373,6 +373,6 @@ void caliHardTurn(){
     Serial.print(caliValues[i]);
     Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
   }
-  Serial.print(hardTurn)
+  Serial.print(hardTurn);
   Serial.println();
 }
