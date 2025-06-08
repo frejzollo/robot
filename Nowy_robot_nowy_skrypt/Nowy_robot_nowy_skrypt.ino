@@ -31,11 +31,11 @@ int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
 int sensorsInAirValue = 100;
-float Kp = 60.0;
-float Kd = 45.0;
-float baseSpeedMax = 130.0;
-float baseSpeedMin = 80.0;
-float sensor_weights[sensorsNumber] = {-10.0, -6.0, -2.0, -1.0, 0.0, 1.0, 2.0, 6.0, 10.0};
+float Kp = 45.0;
+float Kd = 35.0;
+float baseSpeedMax = 240.0;
+float baseSpeedMin = 120.0;
+float sensor_weights[sensorsNumber] = {-8.0, -4.0, -2.0, -1.0, 0.0, 1.0, 2.0, 4.0, 8.0};
 int inRideDelay = 15;
 
 
