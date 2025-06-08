@@ -3,12 +3,40 @@ const int sensorsNumber = 9;
 int analogPins[sensorsNumber] = {27, 26, 25, 33, 32, 35, 34, 39, 36}; //patrząc z góry od lewej do prawej
 const int button = 18;
 
+// Motor prawy
+const int ENR = 19;
+const int R1 =  17;
+const int R2 = 16;
+
+//Motor lewy
+const int ENL = 23; 
+const int L2 = 21;
+const int L1 = 22;
+
+//BACK_EMF_____________________________________________________________
+bool doIGiveAFuck = true; //<------------------------------------------Jak false to wszystkie dodatkowe zabezpieczenia idą się jebać
+int safetySpeedChange = 50;
+int backEMFDelay = 30;
+
+
+//PWM__________________________________________________________________
+const int pwmFreq = 1000;
+const int pwmResolution = 8;
+const int pwmChannelL = 0;
+const int pwmChannelR = 1;
+
+
 //SOFTWARE-ZIMENNE__________________________________________________________
 int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
+int sensorsInAir = 100;
+
+
+//ZAKRESY BLEDOW
 int readErrorBlack = 300; // podloga
 int readErrorWhite = 300; // linia
+
 
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
@@ -19,6 +47,69 @@ int blackLevels[sensorsNumber]; //stany na linii
 int whiteLevels[sensorsNumber]; //stany na powierzchni
 int caliValues[sensorsNumber]; //skalibrowane
 
+
+//FUNKCJE-SILNIKI__________________________________________________________
+
+//lewy silnik
+void leftMotor(float speed) {
+
+  static float lastSpeed = 0;
+  speed = constrain(speed, -255.0, 255.0);
+
+  if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
+    digitalWrite(L1, HIGH);
+    digitalWrite(L2, HIGH);
+    delay(backEMFDelay);
+  }
+
+if(speed > 0){
+  digitalWrite(L1, HIGH);
+  digitalWrite(L2, LOW);
+  ledcWrite(pwmChannelL, int(speed));
+}
+else if(speed < 0){
+  digitalWrite(L1, LOW);
+  digitalWrite(L2, HIGH);
+  ledcWrite(pwmChannelL, int(-speed));
+}
+else{
+  digitalWrite(L1, LOW);
+  digitalWrite(L2, LOW);
+  ledcWrite(pwmChannelL, 0);
+}
+
+  lastSpeed = speed;
+}
+
+//prawy silnik
+void rightMotor(float speed) {
+
+  static float lastSpeed = 0;
+  speed = constrain(speed, -255.0, 255.0);
+
+  if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
+    digitalWrite(R1, HIGH);
+    digitalWrite(R2, HIGH);
+    delay(backEMFDelay);
+  }
+  if(speed > 0){
+    digitalWrite(R1, HIGH);
+    digitalWrite(R2, LOW);
+    ledcWrite(pwmChannelR, int(speed));
+  }
+  else if(speed < 0){
+    digitalWrite(R1, LOW);
+    digitalWrite(R2, HIGH);
+    ledcWrite(pwmChannelR, int(-speed));
+  }
+  else{
+    digitalWrite(R1, LOW);
+    digitalWrite(R2, LOW);
+    ledcWrite(pwmChannelR, 0);
+  }
+
+  lastSpeed = speed;
+}
 //FUNKCJE-DODATKOWE________________________________________________________
 
 //Zrzut: tablica[A] => tablica[B]
@@ -28,7 +119,14 @@ void drop(int* A, int* B){
   }
 }
 
-
+//Suma analogowych wartości czujników 
+int sumSensorsAnalog(){
+  int x = 0;
+  for(int i = 0; i < sensorsNumber; i++){
+    x += analogValues[i];
+  }
+  return x;
+}
 
 //SETUP________________________________________________________________
 
@@ -38,6 +136,19 @@ void setup(){
     pinMode(analogPins[i], INPUT);
   }
   pinMode(button, INPUT_PULLUP);
+  pinMode(L1, OUTPUT);
+  pinMode(L2, OUTPUT);
+  pinMode(ENL, OUTPUT);
+  pinMode(R1, OUTPUT);
+  pinMode(R2, OUTPUT);
+  pinMode(ENR, OUTPUT);
+
+  //PWM setup
+  ledcSetup(pwmChannelL, pwmFreq, pwmResolution);
+  ledcAttachPin(ENL, pwmChannelL);
+
+  ledcSetup(pwmChannelR, pwmFreq, pwmResolution);
+  ledcAttachPin(ENR, pwmChannelR);
 }
 
 //LOOP_________________________________________________________________
@@ -76,6 +187,17 @@ void loop(){
     whiteCali = true;
   }
   
+  //mod 3: jazda
+  if(mode == 3)
+  {
+    leftMotor(100);
+    rightMotor(100);
+  }
+    if(mode >= 4)
+  {
+    leftMotor(0);
+    rightMotor(0);
+  }
   
   
   //DEBUG
