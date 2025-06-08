@@ -2,7 +2,7 @@
 const int sensorsNumber = 7;
 int sensorsInAirValue = 5;
 int speedsetterMax = 650;
-bool isSpeedSetter = false;
+bool isSpeedSetter = true;
 
 
 //BACK_EMF_____________________________________________________________
@@ -12,10 +12,10 @@ int backEMFDelay = 30;
 
 //SOFTWARE_____________________________________________________________
 
-float Kp = 40.0;
-float Kd = 25.0;
-float baseSpeedMax = 80.0;
-float baseSpeedMin = 30.0;
+float Kp = 60.0;
+float Kd = 45.0;
+float baseSpeedMax = 130.0;
+float baseSpeedMin = 80.0;
 float sensor_weights[sensorsNumber] = {-12.0, -9.0, -4.0, 0.0, 4.0, 9.0, 12.0};
 int loopDelay = 10;
 int inRideDelay = 15;
@@ -138,21 +138,21 @@ void leftMotor(float speed) {
     delay(backEMFDelay);
   }
 
-  if(speed > 0){
-    digitalWrite(L1, HIGH);
-    digitalWrite(L2, LOW);
-    analogWrite(ENL, int(speed));
-  }
-  else if(speed < 0){
-    digitalWrite(L1, LOW);
-    digitalWrite(L2, HIGH);
-    analogWrite(ENL, int(-speed));
-  }
-  else{
-    digitalWrite(L1, LOW);
-    digitalWrite(L2, LOW);
-    analogWrite(ENL, 0);
-  }
+if(speed > 0){
+  digitalWrite(L1, HIGH);
+  digitalWrite(L2, LOW);
+  ledcWrite(pwmChannelL, int(speed));
+}
+else if(speed < 0){
+  digitalWrite(L1, LOW);
+  digitalWrite(L2, HIGH);
+  ledcWrite(pwmChannelL, int(-speed));
+}
+else{
+  digitalWrite(L1, LOW);
+  digitalWrite(L2, LOW);
+  ledcWrite(pwmChannelL, 0);
+}
 
   lastSpeed = speed;
 }
@@ -173,17 +173,17 @@ void rightMotor(float speed) {
   if(speed > 0){
     digitalWrite(R1, HIGH);
     digitalWrite(R2, LOW);
-    analogWrite(ENR, int(speed));
+    ledcWrite(pwmChannelR, int(speed));
   }
   else if(speed < 0){
     digitalWrite(R1, LOW);
     digitalWrite(R2, HIGH);
-    analogWrite(ENR, int(-speed));
+    ledcWrite(pwmChannelR, int(-speed));
   }
   else{
     digitalWrite(R1, LOW);
     digitalWrite(R2, LOW);
-    analogWrite(ENR, 0);
+    ledcWrite(pwmChannelR, 0);
   }
 
   lastSpeed = speed;
