@@ -8,8 +8,13 @@ int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
 
+bool blackCali = false; //czy skalibrowano sensory na linie
+bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
+
 //SOFTWARE-TABLICE__________________________________________________________
 int analogValues[sensorsNumber];
+int blackLevels[sensorsNumber]; //stany na linii
+int whiteLevels[sensorsNumber]; //stany na powierzchni
 
 //FUNKCJE-DODATKOWE________________________________________________________
 
@@ -41,9 +46,39 @@ void loop(){
     delay(400);
   }
 
+    //zczytywanie wartości czujników po kalibracji: powierzchnia = 1, linia = -1, niepewny odczyt = 0
+  if(whiteCali && blackCali){
+    for (int i = 0; i < sensorsNumber; i++) {
+      if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
+        caliValues[i] = -1;
+      }
+      else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
+        caliValues[i] = 1;
+      }
+      else{
+        caliValues[i] = 0;
+      }
+    }
+  }
+  
+  //mod 1: jednorazowe zczytanie aktualnych odczytów czujników i przypisanie ich jako wartości odpowiadających linii
+  if(mode == 1 && !blackCali){
+    drop(analogPins, blackLevels);
+    blackCali = true;
+  }
+  
+  //mod 2: jednorazowe zczytanie aktualnych odczytów czujników i przypisanie ich jako wartości odpowiadających powierzchni
+  if(mode == 2 && !whiteCali){
+    drop(analogPins, whiteLevels);
+    whiteCali = true;
+  }
+  
+  
+  
   //DEBUG
   if(iteration % 100 == 0){
-  basicInfo();
+  //basicInfo();
+  levelsInfo();
   }
   iteration += 1;
 
@@ -63,5 +98,30 @@ void basicInfo(){
     Serial.print(i < sensorsNumber - 1 ? ", " : "] / ");
   }
   Serial.print(mode);
+  Serial.println();
+}
+
+void levelsInfo(){
+
+  Serial.print("[");
+  for (int i = 0; i < sensorsNumber; i++) {
+    Serial.print(analogValues[i]);
+    Serial.print(i < sensorsNumber - 1 ? ", " : "] / ");
+  }
+  Serial.print("[");
+  for (int i = 0; i < sensorsNumber; i++) {
+    Serial.print(blackLevels[i]);
+    Serial.print(i < sensorsNumber - 1 ? ", " : "] / ");
+  }
+  Serial.print("[");
+  for (int i = 0; i < sensorsNumber; i++) {
+    Serial.print(whiteLevels[i]);
+    Serial.print(i < sensorsNumber - 1 ? ", " : "] / ");
+  }
+  //Serial.print("[");
+  // for (int i = 0; i < sensorsNumber; i++) {
+  //   Serial.print(caliValues[i]);
+  //   Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
+  // }
   Serial.println();
 }
