@@ -39,6 +39,7 @@ float sensor_weights[sensorsNumber] = {-8.0, -4.0, -2.0, -1.0, 0.0, 1.0, 2.0, 4.
 int inRideDelay = 15;
 int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
 int hardTurn = 0; // wartosc -1 lewo, 1 prawo
+int hardTimeStart = 0;
 
 
 //ZAKRESY BLEDOW
@@ -147,7 +148,7 @@ void ride(){
     line_error = line_error / count;
   }
   else{
-    emergencyTurn(hardTurn);
+    emergencyTurn();
     return;
   }
 
@@ -173,11 +174,17 @@ void ride(){
 
   if(count >= 3 && caliValues[0] == 1)
   {
-    int hardTurn = -1;
+    hardTurn = -1;
+    hardTimeStart = millis();
   }
   else if(count >= 3 && caliValues[8] == 1)
   {
-    int hardTurn = 1;
+    hardTurn = 1;
+    hardTimeStart = millis();
+  }
+
+  if(millis() - hardTimeStart > 1000){
+    hardTurn = 0;
   }
 
 
@@ -189,7 +196,7 @@ void ride(){
 
 }
  
-void emergencyTurn(int hardTurn){
+void emergencyTurn(){
   
   if(hardTurn != 0)
   {
@@ -206,12 +213,12 @@ void emergencyTurn(int hardTurn){
   else{
   if(lastKnowDirection == 1)
   {
-    leftMotor(-150);
-    rightMotor(150);
-  }
-  else if(lastKnowDirection == -1){
     leftMotor(150);
     rightMotor(-150);
+  }
+  else if(lastKnowDirection == -1){
+    leftMotor(-150);
+    rightMotor(150);
   }
 }
 }
@@ -234,6 +241,8 @@ int sumSensorsAnalog(){
   }
   return x;
 }
+
+
 
 //SETUP________________________________________________________________
 
@@ -303,7 +312,7 @@ void loop(){
       rightMotor(0);
     }
     else{
-      //ride();
+      ride();
     }
   }
     if(mode >= 4)
@@ -317,7 +326,7 @@ void loop(){
   if(iteration % 100 == 0){
   //basicInfo();
   //levelsInfo();
-  caliHardTurn();
+  //caliHardTurn();
   }
   iteration += 1;
 
@@ -374,5 +383,9 @@ void caliHardTurn(){
     Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
   }
   Serial.print(hardTurn);
+  Serial.print(" , L P: ");
+  Serial.print(caliValues[0] == 1);
+  Serial.print(" , ");
+  Serial.print(caliValues[8] == 1);
   Serial.println();
 }
