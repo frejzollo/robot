@@ -4,18 +4,21 @@ int analogPins[sensorsNumber] = {27, 26, 25, 33, 32, 35, 34, 39, 36}; //patrząc
 const int button = 18;
 
 //SOFTWARE-ZIMENNE__________________________________________________________
-int loopDelay = 200;
+int loopDelay = 10;
+int iteration = 0;
 int mode=0; // tryb guzika
 
 //SOFTWARE-TABLICE__________________________________________________________
 int analogValues[sensorsNumber];
 
-//FuUNKCJE-DODATKOWE________________________________________________________
-void readSensors() {
-  for (int i = 0; i < sensorsNumber; i++) {
-    analogValues[i] = analogRead(analogPins[i]);
+//FUNKCJE-DODATKOWE________________________________________________________
+
+//Zrzut: tablica[A] => tablica[B]
+void drop(int* A, int* B){
+  for(int i = 0; i < sensorsNumber; i++) {
+    B[i] = analogRead(A[i]);
   }
-};
+}
 
 
 
@@ -32,12 +35,19 @@ void setup(){
 //LOOP_________________________________________________________________
 
 void loop(){
+  drop(analogPins, analogValues);
   if (digitalRead(button) == LOW) {
     mode += 1;
     delay(400);
   }
-  readSensors();
+
+  //DEBUG
+  if(iteration % 100 == 0){
   basicInfo();
+  }
+  iteration += 1;
+
+
   delay(loopDelay);
 }
 
