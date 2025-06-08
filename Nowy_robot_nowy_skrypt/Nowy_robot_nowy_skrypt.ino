@@ -30,7 +30,7 @@ const int pwmChannelR = 1;
 int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
-int sensorsInAir = 100;
+int sensorsInAirValue = 100;
 
 
 //ZAKRESY BLEDOW
@@ -190,8 +190,16 @@ void loop(){
   //mod 3: jazda
   if(mode == 3)
   {
+   
+    if(sumSensorsAnalog() < sensorsInAirValue){ //stop gdy podniesiemy robota lub gdy najedzie prostopadle na linie!!
+      leftMotor(0);
+      rightMotor(0);
+    }
+    else{
+      //ride();
     leftMotor(100);
     rightMotor(100);
+    }
   }
     if(mode >= 4)
   {
