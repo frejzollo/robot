@@ -35,7 +35,7 @@ float Kp = 60.0;
 float Kd = 45.0;
 float baseSpeedMax = 130.0;
 float baseSpeedMin = 80.0;
-float sensor_weights[sensorsNumber] = {-10.0, -8.0, -5.0, -2.0, 0.0, 2.0, 5.0, 8.0, 10.0};
+float sensor_weights[sensorsNumber] = {-10.0, -6.0, -2.0, -1.0, 0.0, 1.0, 2.0, 6.0, 10.0};
 int inRideDelay = 15;
 
 
@@ -124,8 +124,8 @@ void ride(){
   int count = 0;
 
   for(int i = 0; i < sensorsNumber; i++){
-    if(caliValues[i] == -1){
-      line_error -= sensor_weights[i];
+    if(caliValues[i] == 1){
+      line_error += sensor_weights[i];
       count++;
     }
   }
