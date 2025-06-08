@@ -7,6 +7,8 @@ const int button = 18;
 int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
+int readErrorBlack = 300; // podloga
+int readErrorWhite = 300; // linia
 
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
@@ -15,6 +17,7 @@ bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 int analogValues[sensorsNumber];
 int blackLevels[sensorsNumber]; //stany na linii
 int whiteLevels[sensorsNumber]; //stany na powierzchni
+int caliValues[sensorsNumber]; //skalibrowane
 
 //FUNKCJE-DODATKOWE________________________________________________________
 
@@ -60,7 +63,7 @@ void loop(){
       }
     }
   }
-  
+
   //mod 1: jednorazowe zczytanie aktualnych odczytów czujników i przypisanie ich jako wartości odpowiadających linii
   if(mode == 1 && !blackCali){
     drop(analogPins, blackLevels);
@@ -85,6 +88,8 @@ void loop(){
 
   delay(loopDelay);
 }
+
+
 
 //DEBUG_________________________________________________________________
 
@@ -118,10 +123,10 @@ void levelsInfo(){
     Serial.print(whiteLevels[i]);
     Serial.print(i < sensorsNumber - 1 ? ", " : "] / ");
   }
-  //Serial.print("[");
-  // for (int i = 0; i < sensorsNumber; i++) {
-  //   Serial.print(caliValues[i]);
-  //   Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
-  // }
+  Serial.print("[");
+  for (int i = 0; i < sensorsNumber; i++) {
+    Serial.print(caliValues[i]);
+    Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
+  }
   Serial.println();
 }
