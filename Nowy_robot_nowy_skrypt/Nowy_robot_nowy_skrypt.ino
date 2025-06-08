@@ -31,6 +31,12 @@ int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
 int sensorsInAirValue = 100;
+float Kp = 60.0;
+float Kd = 45.0;
+float baseSpeedMax = 130.0;
+float baseSpeedMin = 80.0;
+float sensor_weights[sensorsNumber] = {-10.0, -8.0, -5.0, -2.0, 0.0, 2.0, 5.0, 8.0, 10.0};
+int inRideDelay = 15;
 
 
 //ZAKRESY BLEDOW
@@ -110,6 +116,45 @@ void rightMotor(float speed) {
 
   lastSpeed = speed;
 }
+
+//FUNKCJE-GLOWNE
+void ride(){
+
+  float line_error = 0.0;
+  int count = 0;
+
+  for(int i = 0; i < sensorsNumber; i++){
+    if(caliValues[i] == -1){
+      line_error -= sensor_weights[i];
+      count++;
+    }
+  }
+
+  if(count > 0){
+    line_error = line_error / count;
+  }
+  else{
+    line_error = 0;
+  }
+
+  // Regulacja PD
+  static float last_error = 0;
+  float derivative = line_error - last_error;
+  float correction = Kp * line_error + Kd * derivative;
+  last_error = line_error;
+
+  // Dynamiczna prędkość w zależności od zakrętu
+  float base_speed = constrain(baseSpeedMax - abs(line_error) * 10.0, baseSpeedMin, baseSpeedMax);
+
+  float left_speed = base_speed + correction;
+  float right_speed = base_speed - correction;
+
+  leftMotor(left_speed);
+  rightMotor(right_speed);
+
+  delay(inRideDelay);
+}
+
 //FUNKCJE-DODATKOWE________________________________________________________
 
 //Zrzut: tablica[A] => tablica[B]
@@ -196,9 +241,7 @@ void loop(){
       rightMotor(0);
     }
     else{
-      //ride();
-    leftMotor(100);
-    rightMotor(100);
+      ride();
     }
   }
     if(mode >= 4)
