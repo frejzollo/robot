@@ -37,6 +37,8 @@ float baseSpeedMax = 240.0;
 float baseSpeedMin = 120.0;
 float sensor_weights[sensorsNumber] = {-8.0, -4.0, -2.0, -1.0, 0.0, 1.0, 2.0, 4.0, 8.0};
 int inRideDelay = 15;
+int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
+int hardTurn = 0; // wartosc -1 lewo, 1 prawo
 
 
 //ZAKRESY BLEDOW
@@ -69,24 +71,24 @@ void leftMotor(float speed) {
     delay(backEMFDelay);
   }
 
-if(speed > 0){
+ if(speed > 0){
   digitalWrite(L1, HIGH);
   digitalWrite(L2, LOW);
   ledcWrite(pwmChannelL, int(speed));
-}
-else if(speed < 0){
+ }
+ else if(speed < 0){
   digitalWrite(L1, LOW);
   digitalWrite(L2, HIGH);
   ledcWrite(pwmChannelL, int(-speed));
-}
-else{
+ }
+ else{
   digitalWrite(L1, LOW);
   digitalWrite(L2, LOW);
   ledcWrite(pwmChannelL, 0);
-}
+ }
 
   lastSpeed = speed;
-}
+ }
 
 //prawy silnik
 void rightMotor(float speed) {
@@ -145,7 +147,8 @@ void ride(){
     line_error = line_error / count;
   }
   else{
-    line_error = 0;
+    emergencyTurn(hardTurn);
+    return;
   }
 
   // Regulacja PD
@@ -160,11 +163,59 @@ void ride(){
   float left_speed = base_speed + correction;
   float right_speed = base_speed - correction;
 
+  if(left_speed > right_speed)
+  {
+    lastKnowDirection = -1;
+  }
+  else{
+    lastKnowDirection = 1;
+  }
+
+  if(count >= 3 && caliValues[0] == 1)
+  {
+    int hardTurn = -1;
+  }
+  else if(count >= 3 && caliValues[8] == 1)
+  {
+    int hardTurn = 1;
+  }
+
+
+  
   leftMotor(left_speed);
   rightMotor(right_speed);
 
   delay(inRideDelay);
+
 }
+ 
+void emergencyTurn(int hardTurn){
+  
+  if(hardTurn != 0)
+  {
+    if(hardTurn == 1)
+    {
+      leftMotor(150);
+      rightMotor(-150);
+    }
+    else{
+      leftMotor(-150);
+      rightMotor(150);
+    }
+  }
+  else{
+  if(lastKnowDirection == 1)
+  {
+    leftMotor(-150);
+    rightMotor(150);
+  }
+  else if(lastKnowDirection == -1){
+    leftMotor(150);
+    rightMotor(-150);
+  }
+}
+}
+
 
 //FUNKCJE-DODATKOWE________________________________________________________
 
@@ -252,7 +303,7 @@ void loop(){
       rightMotor(0);
     }
     else{
-      ride();
+      //ride();
     }
   }
     if(mode >= 4)
@@ -266,6 +317,7 @@ void loop(){
   if(iteration % 100 == 0){
   //basicInfo();
   //levelsInfo();
+  caliHardTurn();
   }
   iteration += 1;
 
@@ -312,5 +364,15 @@ void levelsInfo(){
     Serial.print(caliValues[i]);
     Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
   }
+  Serial.println();
+}
+
+void caliHardTurn(){
+    Serial.print("[");
+  for (int i = 0; i < sensorsNumber; i++) {
+    Serial.print(caliValues[i]);
+    Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
+  }
+  Serial.print(hardTurn)
   Serial.println();
 }
