@@ -46,6 +46,7 @@ int readErrorWhite = 300; // linia
 
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
+bool mieszkanie = true; //gdzie jestesmy mieszkanie true, konkurs- false
 
 //SOFTWARE-TABLICE__________________________________________________________
 int analogValues[sensorsNumber];
@@ -123,11 +124,21 @@ void ride(){
   float line_error = 0.0;
   int count = 0;
 
+  if(mieszkanie){
   for(int i = 0; i < sensorsNumber; i++){
     if(caliValues[i] == 1){
       line_error += sensor_weights[i];
       count++;
     }
+  }
+}
+  else{
+      for(int i = 0; i < sensorsNumber; i++){
+    if(caliValues[i] == -1){
+      line_error -= sensor_weights[i];
+      count++;
+    }
+  }
   }
 
   if(count > 0){
@@ -254,7 +265,7 @@ void loop(){
   //DEBUG
   if(iteration % 100 == 0){
   //basicInfo();
-  levelsInfo();
+  //levelsInfo();
   }
   iteration += 1;
 
