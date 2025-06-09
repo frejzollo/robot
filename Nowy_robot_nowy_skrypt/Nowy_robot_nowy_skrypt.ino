@@ -31,12 +31,12 @@ int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
 int sensorsInAirValue = 100;
-float Kp = 50.0;
-float Kd = 30.0;
+float Kp = 65.0;
+float Kd = 45.0;
 float baseSpeedMax = 240.0;
 float baseSpeedMin = 120.0;
-float sensor_weights[sensorsNumber] = {-10.0, -4.0, -2.0, -1.0, 0.0, 1.0, 2.0, 4.0, 10.0};
-int inRideDelay = 15;
+float sensor_weights[sensorsNumber] = {-10.0, -4.0, -3.0, -2.0, 0.0, 2.0, 3.0, 4.0, 10.0};
+int inRideDelay = 5;
 int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
 int hardTurn = 0; // wartosc -1 lewo, 1 prawo
 int hardTimeStart = 0;
@@ -196,8 +196,18 @@ void ride(){
     }
   }
 
-  if(millis() - hardTimeStart > 1000){
+  if(millis() - hardTimeStart > 800){
     hardTurn = 0;
+  }
+
+  if(caliValues[4] == -1)
+  {
+      sensor_weights[8] = 10.0;
+      sensor_weights[7] = 4.0;
+      sensor_weights[6] = 3.0;
+      sensor_weights[0] = -10.0;
+      sensor_weights[1] = -4.0;
+      sensor_weights[2] = -3.0;
   }
 
 
@@ -215,23 +225,31 @@ void emergencyTurn(){
   {
     if(hardTurn == 1)
     {
-      leftMotor(150);
-      rightMotor(-150);
+      sensor_weights[8] = 0;
+      sensor_weights[7] = 0;
+      sensor_weights[6] = 0;
+      //sensor_weights[3] = 0;
+      leftMotor(255);
+      rightMotor(-200);
     }
     else{
-      leftMotor(-150);
-      rightMotor(150);
+      sensor_weights[0] = 0;
+      sensor_weights[1] = 0;
+      sensor_weights[2] = 0;
+      //sensor_weights[3] = 0;
+      leftMotor(-200);
+      rightMotor(255);
     }
   }
   else{
   if(lastKnowDirection == 1)
   {
-    leftMotor(150);
-    rightMotor(-150);
+    leftMotor(255);
+    rightMotor(-200);
   }
   else if(lastKnowDirection == -1){
-    leftMotor(-150);
-    rightMotor(150);
+    leftMotor(-200);
+    rightMotor(255);
   }
 }
 }
@@ -338,7 +356,7 @@ void loop(){
   //DEBUG
   if(iteration % 100 == 0){
   //basicInfo();
-  //levelsInfo();
+  levelsInfo();
   //caliHardTurn();
   }
   iteration += 1;
