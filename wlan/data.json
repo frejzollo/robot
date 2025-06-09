@@ -1,9 +1,0 @@
-{
-  "Kp": 60,
-  "Kd": 40,
-  "baseSpeedMax": 130.0,
-  "baseSpeedMin": 80.0,
-  "loopDelay": 10.0,
-  "rideDelay": 15.0,
-  "sensorWeights": [-12.0, -9.0, -4.0, 0.0, 4.0, 9.0, 12.0]
-}
