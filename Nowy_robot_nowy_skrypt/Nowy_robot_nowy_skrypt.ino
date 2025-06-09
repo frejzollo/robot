@@ -5,13 +5,13 @@ const int button = 18;
 
 // Motor prawy
 const int ENR = 19;
-const int R1 =  17;
-const int R2 = 16;
+const int R2 =  17;
+const int R1 = 16;
 
 //Motor lewy
 const int ENL = 23; 
-const int L2 = 21;
-const int L1 = 22;
+const int L1 = 21;
+const int L2 = 22;
 
 //BACK_EMF_____________________________________________________________
 bool doIGiveAFuck = true; //<------------------------------------------Jak false to wszystkie dodatkowe zabezpieczenia idą się jebać
@@ -49,7 +49,7 @@ int readErrorWhite = 300; // linia
 
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
-bool mieszkanie = true; //gdzie jestesmy mieszkanie true, konkurs- false
+bool mieszkanie = false; //gdzie jestesmy mieszkanie true, konkurs- false
 
 //SOFTWARE-TABLICE__________________________________________________________
 int analogValues[sensorsNumber];
@@ -138,7 +138,7 @@ void ride(){
   else{
       for(int i = 0; i < sensorsNumber; i++){
     if(caliValues[i] == -1){
-      line_error -= sensor_weights[i];
+      line_error += sensor_weights[i];
       count++;
     }
   }
@@ -171,16 +171,29 @@ void ride(){
   else{
     lastKnowDirection = 1;
   }
-
-  if(count >= 3 && caliValues[0] == 1)
-  {
-    hardTurn = -1;
-    hardTimeStart = millis();
+  if(mieszkanie){
+    if(count >= 3 && caliValues[0] == 1)
+    {
+      hardTurn = -1;
+      hardTimeStart = millis();
+    }
+    else if(count >= 3 && caliValues[8] == 1)
+    {
+      hardTurn = 1;
+      hardTimeStart = millis();
+    }
   }
-  else if(count >= 3 && caliValues[8] == 1)
-  {
-    hardTurn = 1;
-    hardTimeStart = millis();
+  else{
+    if(count >= 3 && caliValues[0] == -1)
+    {
+      hardTurn = -1;
+      hardTimeStart = millis();
+    }
+    else if(count >= 3 && caliValues[8] == -1)
+    {
+      hardTurn = 1;
+      hardTimeStart = millis();
+    }
   }
 
   if(millis() - hardTimeStart > 1000){
