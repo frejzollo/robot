@@ -31,11 +31,11 @@ int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
 int sensorsInAirValue = 100;
-float Kp = 30.0;
+float Kp = 50.0;
 float Kd = 30.0;
 float baseSpeedMax = 240.0;
 float baseSpeedMin = 120.0;
-float sensor_weights[sensorsNumber] = {-10.0, -5.0, -2.0, -1.0, 0.0, 1.0, 2.0, 5.0, 10.0};
+float sensor_weights[sensorsNumber] = {-10.0, -4.0, -2.0, -1.0, 0.0, 1.0, 2.0, 4.0, 10.0};
 int inRideDelay = 15;
 int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
 int hardTurn = 0; // wartosc -1 lewo, 1 prawo
@@ -64,7 +64,7 @@ int caliValues[sensorsNumber]; //skalibrowane
 void leftMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0);
+  speed = constrain(speed, -255.0, 255.0) * 0.3;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(L1, HIGH);
@@ -95,7 +95,7 @@ void leftMotor(float speed) {
 void rightMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0);
+  speed = constrain(speed, -255.0, 255.0) * 0.3;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(R1, HIGH);
