@@ -109,19 +109,18 @@ void ride() {
     if (caliValues[0] == -1 && emergencyTurnState == 0)
         emergencyTurnState = 1;
     if (caliValues[0] == 1 && emergencyTurnState == 1){ // wykrywa tło (wcześniej wykrył linie więc trzeba się obrócić w lewo)
-        rotate(turnSpeed);
+        rotate(turnSpeed); // skręcamy w lewo
         emergencyTurnState = 0;
         return;
     }
         
-    if (caliValues[sensorsNumber] == -1 && emergencyTurnState == 0)
+    if (caliValues[sensorsNumber-1] == -1 && emergencyTurnState == 0)
         emergencyTurnState = 2;
-    if (caliValues[sensorsNumber] == 1 && emergencyTurnState == 2){ // wykrywa tło (wcześniej wykrył linie więc trzeba się obrócić w prawo)
-        rotate(-turnSpeed);
+    if (caliValues[sensorsNumber-1] == 1 && emergencyTurnState == 2){ // wykrywa tło (wcześniej wykrył linie więc trzeba się obrócić w prawo)
+        rotate(-turnSpeed); // skręcamy w prawo
         emergencyTurnState = 0;
         return;
     }
-
 
     leftMotor(leftSpeed);
     rightMotor(rightSpeed);        
@@ -134,8 +133,15 @@ void rotate(int direction){
         if (caliValues[sensorsNumber/2] == -1)
             break;
 
-        leftMotor(direction);
-        rightMotor(-direction); 
+        if(direction > 0){
+          leftMotor(-direction * arcMov);
+          rightMotor(direction); 
+        }
+        else{
+          leftMotor(-direction);
+          rightMotor(direction * arcMov); 
+        }
+        
     }
 }
 
@@ -149,7 +155,7 @@ void emergencyTurn(){
         leftMotor(-turnSpeed * arcMov);
         rightMotor(turnSpeed);
     }
-    while(caliValues[4 - lastKnowDirection * turnBreakDistance] == 1){
+    while(caliValues[4 - lastKnowDirection * turnBreakDistance] == 1) {
         updateCaliValues();
         continue;
     }
@@ -205,9 +211,6 @@ void handleModeChange() {
         }
         lastHandledMode = mode;  // zapamiętaj, że już obsłużyliśmy ten tryb
     }
-
-    if(mode == 3)
-      ride();
 }
 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -237,6 +240,9 @@ void loop(){
     checkButton();
     handleModeChange();
 
+    if(mode == 3)
+      ride();
+    
     //DEBUG
     if(iteration % 100 == 0){
         iteration = 0;
