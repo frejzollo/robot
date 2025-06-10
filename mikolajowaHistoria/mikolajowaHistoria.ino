@@ -31,11 +31,11 @@ int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
 int sensorsInAirValue = 100;
-float Kp = 70.0;
+float Kp = 75.0;
 float Kd = 55.0;
 float baseSpeedMax = 240.0;
 float baseSpeedMin = 120.0;
-float sensor_weights[sensorsNumber] = {-5.0, -3.0, -3.0, -4.0, 0.0, 4.0, 3.0, 3.0, 5.0};
+float sensor_weights[sensorsNumber] = {-9.0, -4.0, -3.0, -2.0, 0.0, 2.0, 3.0, 4.0, 9.0};
 int inRideDelay = 5;
 int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
 int hardTurn = 0; // wartosc -1 lewo, 1 prawo
@@ -55,7 +55,9 @@ bool mieszkanie = false; //gdzie jestesmy mieszkanie true, konkurs- false
 int analogValues[sensorsNumber];
 int blackLevels[sensorsNumber]; //stany na linii
 int whiteLevels[sensorsNumber]; //stany na powierzchni
-int caliValues[sensorsNumber]; //skalibrowane
+const int historyLength = 1;
+int actualHistoryIndex = 5;
+int caliValues[sensorsNumber][historyLength]; //skalibrowane
 
 
 //FUNKCJE-SILNIKI__________________________________________________________
@@ -64,7 +66,7 @@ int caliValues[sensorsNumber]; //skalibrowane
 void leftMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * 0.25;
+  speed = constrain(speed, -255.0, 255.0) * 0.37;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(L1, HIGH);
@@ -95,7 +97,7 @@ void leftMotor(float speed) {
 void rightMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * 0.25;
+  speed = constrain(speed, -255.0, 255.0) * 0.37;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(R1, HIGH);
@@ -121,6 +123,12 @@ void rightMotor(float speed) {
   lastSpeed = speed;
 }
 
+int getHistoricalValue(){
+    if(actualHistoryIndex > 0)
+        return actualHistoryIndex-1;
+    return historyLength-1;
+}
+
 //FUNKCJE-GLOWNE
 void ride(){
 
@@ -129,7 +137,7 @@ void ride(){
 
   if(mieszkanie){
   for(int i = 0; i < sensorsNumber; i++){
-    if(caliValues[i] == 1){
+    if(caliValues[i][getHistoricalValue()] == 1){
       line_error += sensor_weights[i];
       count++;
     }
@@ -137,7 +145,7 @@ void ride(){
 }
   else{
       for(int i = 0; i < sensorsNumber; i++){
-    if(caliValues[i] == -1){
+    if(caliValues[i][getHistoricalValue()] == -1){
       line_error += sensor_weights[i];
       count++;
     }
@@ -180,31 +188,22 @@ void ride(){
 
   }
   else{
-    if(count >= 3 && caliValues[0] == -1)
+    if(count >= 3 && caliValues[0][getHistoricalValue()] == -1)
     {
       hardTurn = -1;
       hardTimeStart = millis();
     }
-    else if(count >= 3 && caliValues[8] == -1)
+    else if(count >= 3 && caliValues[8][getHistoricalValue()] == -1)
     {
       hardTurn = 1;
       hardTimeStart = millis();
     }
   }
 
-  if(millis() - hardTimeStart > 800){
+  if(millis() - hardTimeStart > 500){
     hardTurn = 0;
   }
 
-  if(caliValues[4] == -1)
-  {
-      sensor_weights[8] = 10.0;
-      sensor_weights[7] = 4.0;
-      sensor_weights[6] = 3.0;
-      sensor_weights[0] = -10.0;
-      sensor_weights[1] = -4.0;
-      sensor_weights[2] = -3.0;
-  }
 
 
   
@@ -222,23 +221,23 @@ void emergencyTurn(){
     if(hardTurn == 1)
     {
       //sensor_weights[3] = 0;
-      leftMotor(200);
-      rightMotor(-255);
+      leftMotor(100);
+      rightMotor(-150);
     }
     else{
       //sensor_weights[3] = 0;
-      leftMotor(-255);
-      rightMotor(200);
+      leftMotor(-150);
+      rightMotor(100);
     }
   }
   else{
   if(lastKnowDirection == 1)
   {
     leftMotor(100);
-    rightMotor(-255);
+    rightMotor(-150);
   }
   else if(lastKnowDirection == -1){
-    leftMotor(-255);
+    leftMotor(-150);
     rightMotor(100);
   }
 }
@@ -302,15 +301,23 @@ void loop(){
   if(whiteCali && blackCali){
     for (int i = 0; i < sensorsNumber; i++) {
       if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
-        caliValues[i] = -1;
+        caliValues[i][actualHistoryIndex] = -1;
       }
       else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
-        caliValues[i] = 1;
+        caliValues[i][actualHistoryIndex] = 1;
       }
       else{
-        caliValues[i] = 0;
+        caliValues[i][actualHistoryIndex] = 0;
       }
     }
+    actualHistoryIndex++;
+
+    if (actualHistoryIndex >= historyLength)
+    {
+        actualHistoryIndex = 0;
+    }
+
+    
   }
 
   //mod 1: jednorazowe zczytanie aktualnych odczytów czujników i przypisanie ich jako wartości odpowiadających linii
@@ -392,7 +399,7 @@ void levelsInfo(){
   }
   Serial.print("[");
   for (int i = 0; i < sensorsNumber; i++) {
-    Serial.print(caliValues[i]);
+    Serial.print(caliValues[i][getHistoricalValue()]);
     Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
   }
   Serial.println();
@@ -401,13 +408,13 @@ void levelsInfo(){
 void caliHardTurn(){
     Serial.print("[");
   for (int i = 0; i < sensorsNumber; i++) {
-    Serial.print(caliValues[i]);
+    Serial.print(caliValues[i][getHistoricalValue()]);
     Serial.print(i < sensorsNumber - 1 ? ", " : "] \n");
   }
   Serial.print(hardTurn);
   Serial.print(" , L P: ");
-  Serial.print(caliValues[0] == 1);
+  Serial.print(caliValues[0][getHistoricalValue()] == 1);
   Serial.print(" , ");
-  Serial.print(caliValues[8] == 1);
+  Serial.print(caliValues[8][getHistoricalValue()] == 1);
   Serial.println();
 }
