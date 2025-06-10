@@ -172,8 +172,7 @@ void checkButton() {
                 mode = 0;
             }
     
-            //Serial.print("Tryb zmieniony na: ");
-            //Serial.println(mode);
+            Serial.print("Wciśnięto przycisk");
     
             lastPressHandledTime = currentTime;
         }
@@ -187,18 +186,23 @@ void handleModeChange() {
       switch (mode) {
         case 1:
             drop(analogPins, blackLevels);
+            Serial.println("Zmiana na stan 1. (set blackLevels)");
             blackCali = true;
             break;
         case 2:
+            Serial.println("Zmiana na stan 2. (set whiteLevels)");
             drop(analogPins, whiteLevels);
             whiteCali = true;
             break;
+        case 3:
+            Serial.println("Zmiana na stan 3. (ride)");
         case 4:
+            Serial.println("Zmiana na stan 4. (stop )");
             leftMotor(0);
             rightMotor(0);
             break;
         default:
-          //Serial.println("Nieznany tryb");
+            Serial.println("Nieznany tryb");
           break;
         }
         lastHandledMode = mode;  // zapamiętaj, że już obsłużyliśmy ten tryb
@@ -245,7 +249,7 @@ void loop(){
     iteration += 1;
 }
 //DEBUG________________________________________________________________________________________________________________
-void basicInfo(){
+void basicInfo() {
 
   Serial.print(digitalRead(button));
   Serial.print(" / ");
