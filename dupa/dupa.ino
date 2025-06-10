@@ -2,8 +2,7 @@
 const int sensorsNumber = 9;
 int analogPins[sensorsNumber] = {27, 26, 25, 33, 32, 35, 34, 39, 36}; //patrząc z góry od lewej do prawej
 const int button = 18;
-float left_speed = 0;
-float right_speed = 0;
+
 // Motor prawy
 const int ENR = 19;
 const int R2 =  17;
@@ -19,7 +18,7 @@ bool doIGiveAFuck = false; //<------------------------------------------Jak fals
 int safetySpeedChange = 50;
 int backEMFDelay = 30;
 
-
+bool isTurn = false;
 //PWM__________________________________________________________________
 const int pwmFreq = 1000;
 const int pwmResolution = 8;
@@ -29,10 +28,10 @@ const int pwmChannelR = 1;
 
 //SOFTWARE-ZIMENNE__________________________________________________________
 int loopDelay = 10;
-
-
+int iteration = 0;
+int mode=0; // tryb guzika
 int sensorsInAirValue = 100;
-float Kp = 40.0;
+float Kp = 65.0;
 float Kd = 45.0;
 float baseSpeedMax = 240.0;
 float baseSpeedMin = 120.0;
@@ -41,32 +40,31 @@ int inRideDelay = 5;
 int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
 int hardTurn = 0; // wartosc -1 lewo, 1 prawo
 int hardTimeStart = 0;
-float speedNerf = 0.3;
 
 
 //ZAKRESY BLEDOW
 int readErrorBlack = 300; // podloga
 int readErrorWhite = 300; // linia
 
-//zmienne-pomocnicze________________________________________________________
+
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 bool mieszkanie = false; //gdzie jestesmy mieszkanie true, konkurs- false
-int iteration = 0;
-int mode=0; // tryb guzika
+
 //SOFTWARE-TABLICE__________________________________________________________
 int analogValues[sensorsNumber];
 int blackLevels[sensorsNumber]; //stany na linii
 int whiteLevels[sensorsNumber]; //stany na powierzchni
 int caliValues[sensorsNumber]; //skalibrowane
 
-bool canRead = true;
+
 //FUNKCJE-SILNIKI__________________________________________________________
+
 //lewy silnik
 void leftMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * speedNerf;
+  speed = constrain(speed, -255.0, 255.0) * 0.25;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(L1, HIGH);
@@ -97,7 +95,7 @@ void leftMotor(float speed) {
 void rightMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * speedNerf;
+  speed = constrain(speed, -255.0, 255.0) * 0.25;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(R1, HIGH);
@@ -150,15 +148,14 @@ void ride(){
     line_error = line_error / count;
   }
   else{
-    if(!(caliValues[4]==-1 || caliValues[3]==-1 || caliValues[5]==-1)){
-          emergencyTurn();
-          return;
-    }
-    else{
-      hardTurn = 0;
-      canRead = true;
-    }
-
+    emergencyTurn();
+    return;
+  }
+  if(isTurn){
+    leftMotor(-lastKnowDirection * 255);
+    rightMotor(lastKnowDirection * 255);
+    delay(20);
+    isTurn = false;
   }
   // Regulacja PD
   static float last_error = 0;
@@ -169,18 +166,34 @@ void ride(){
   // Dynamiczna prędkość w zależności od zakrętu
   float base_speed = constrain(baseSpeedMax - abs(line_error) * 10.0, baseSpeedMin, baseSpeedMax);
 
-  left_speed = base_speed + correction;
-  right_speed = base_speed - correction;
-  if(canRead){
-    if(caliValues[8] != -1 && caliValues[0] == -1 && count > 2){
+  float left_speed = base_speed + correction;
+  float right_speed = base_speed - correction;
+
+  if(left_speed > right_speed)
+  {
+    lastKnowDirection = -1;
+  }
+  else{
+    lastKnowDirection = 1;
+  }
+  if(mieszkanie){
+
+  }
+  else{
+    if(count >= 3 && caliValues[0] == -1)
+    {
       hardTurn = -1;
-      canRead = false;
+      hardTimeStart = millis();
     }
-    else if(caliValues[0] != -1 && caliValues[8] == -1 && count > 2)
+    else if(count >= 3 && caliValues[8] == -1)
     {
       hardTurn = 1;
-          canRead = false;
+      hardTimeStart = millis();
     }
+  }
+
+  if(millis() - hardTimeStart > 800){
+    hardTurn = 0;
   }
 
   if(caliValues[4] == -1)
@@ -203,25 +216,39 @@ void ride(){
 }
  
 void emergencyTurn(){
+  
+  if(hardTurn != 0)
+  {
     if(hardTurn == 1)
     {
-      leftMotor(255);
-      rightMotor(-200);
-    }
-    else if(hardTurn == -1){
-      leftMotor(-200);
-      rightMotor(255);
+      sensor_weights[8] = 0;
+      sensor_weights[7] = 0;
+      sensor_weights[6] = 0;
+      //sensor_weights[3] = 0;
+      leftMotor(200);
+      rightMotor(-255);
     }
     else{
-      if(left_speed > right_speed){
-        leftMotor(255);
-      rightMotor(-200);
-      }
-      else{
-        leftMotor(-200);
-      rightMotor(255);
-      }
+      sensor_weights[0] = 0;
+      sensor_weights[1] = 0;
+      sensor_weights[2] = 0;
+      //sensor_weights[3] = 0;
+      leftMotor(-255);
+      rightMotor(200);
     }
+  }
+  else{
+  if(lastKnowDirection == 1)
+  {
+    leftMotor(200);
+    rightMotor(-255);
+  }
+  else if(lastKnowDirection == -1){
+    leftMotor(-255);
+    rightMotor(200);
+  }
+}
+isTurn = true;
 }
 
 
