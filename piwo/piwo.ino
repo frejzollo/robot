@@ -1,4 +1,5 @@
 //HARDWARE-PINY________________________________________________________________________________________________________
+int led = 2;
 const int sensorsNumber = 9;
 int analogPins[sensorsNumber] = {27, 26, 25, 33, 32, 35, 34, 39, 36}; //patrząc z góry od lewej do prawej
 const int button = 18;
@@ -35,47 +36,38 @@ bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 int iteration = 0;
 int mode = 0; //tryb guzika
 //STROJENIE>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-float speedNerf = 0.3;
+float speedNerf = 0.4;
+float turnNerf = 10;
 float turnSpeed = 255.0;
-float arcMov = 0.8;
-float Kp = 65.0;
-float Kd = 45.0;
+float arcMov = 0.7;
+int turnBreakDistance = 2;
+float Kp = 50.0;
+float Kd = 30.0;
 float s08 = 10.0;
-float s17 = 4.0;
-float s26 = 3.0;
-float s35 = 2.0;
+float s17 = 6.0;
+float s26 = 2.0;
+float s35 = 1.0;
 float s4 = 0.0;
 float sensorsWeights[sensorsNumber] = {-s08, -s17, -s26, -s35, s4, s35, s26, s17, s08};
-float baseSpeedMax = 240.0;
-float baseSpeedMin = 120.0;
+float baseSpeedMax = 150.0;
+float baseSpeedMin = 100.0;
 //POMOC-STROJENIA>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 int lastKnowDirection = 0; //-1 lewo, 1 prawo
-int hardTurn = 0; //-1 lewo, 1 prawo
 int hardTimeStart = 0;
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 //FUNKCJE-GŁÓWNE<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 void ride(){
     while(digitalRead(button)){
         //Update-sensorów______________________________________________________________________________________________
-        drop(analogPins, analogValues);
-        for(int i = 0; i < sensorsNumber; i++){
-                if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
-                    caliValues[i] = -1;
-                }
-                else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){
-                    caliValues[i] = 1;
-                }
-                else{
-                    caliValues[i] = 0;
-                }
-            }
+        updateCaliValues();
+        digitalWrite(led, 0);
         //_____________________________________________________________________________________________________________
         float lineError = 0.0;
         int count = 0;
         for(int i = 0; i < sensorsNumber; i++){
             if(caliValues[i] == -1){
-            lineError += sensorsWeights[i];
-            count++;
+                lineError += sensorsWeights[i];
+                count++;
             }
         }
         if(count > 0){
@@ -83,17 +75,15 @@ void ride(){
         }
         else{
             emergencyTurn();
-            return;
+            continue;
         }
         // Regulacja PD
         static float lastError = 0;
         float derivative = lineError - lastError;
         float correction = Kp * lineError + Kd * derivative;
         lastError = lineError;
-
         // Dynamiczna prędkość w zależności od zakrętu
-        float baseSpeed = constrain(baseSpeedMax - abs(lineError) * 10.0, baseSpeedMin, baseSpeedMax);
-
+        float baseSpeed = constrain(baseSpeedMax - abs(lineError) * turnNerf, baseSpeedMin, baseSpeedMax);
         float leftSpeed = baseSpeed + correction;
         float rightSpeed = baseSpeed - correction;
 
@@ -104,20 +94,10 @@ void ride(){
             lastKnowDirection = 1;
         }
         if(count >= 3 && caliValues[0] == -1){
-            hardTurn = -1;
-            hardTimeStart = millis();
+            hardTurn(-1);
         }
         else if(count >= 3 && caliValues[8] == -1){
-            hardTurn = 1;
-            hardTimeStart = millis();
-        }
-
-        if(millis() - hardTimeStart > 800){
-            hardTurn = 0;
-        }
-
-        if(caliValues[4] == -1){
-            resetWeights();
+            hardTurn(1);
         }
         leftMotor(leftSpeed);
         rightMotor(rightSpeed);        
@@ -125,30 +105,29 @@ void ride(){
 }
 
 void emergencyTurn(){
-    if(hardTurn != 0){
-        if(hardTurn == 1){
-            int idx[] = {8,7,6};
-            disableWeights(idx, sizeof(idx) / sizeof(idx[0]));
-            leftMotor(turnSpeed);
-            rightMotor(-turnSpeed * arcMov);
-        }
-        else{
-            int idx[] = {0,1,2};
-            disableWeights(idx, sizeof(idx) / sizeof(idx[0]));
-            leftMotor(-turnSpeed * arcMov);
-            rightMotor(turnSpeed);
-        }
-    }
-    else{
+        digitalWrite(led, 1);
         if(lastKnowDirection == 1){
             leftMotor(turnSpeed);
             rightMotor(-turnSpeed * arcMov);
         }
-        else if(lastKnowDirection == -1){
-            leftMotor(-turnSpeed * arcMov);
-            rightMotor(turnSpeed);
+        else{
+        leftMotor(-turnSpeed * arcMov);
+        rightMotor(turnSpeed);
         }
+        while(caliValues[4 - lastKnowDirection * turnBreakDistance] == 1){
+            updateCaliValues();
+            continue;
+        }
+        return;
+
+}
+
+void hardTurn(int direction){
+    while(sumCaliValues() != 7){
+        updateCaliValues();
     }
+    lastKnowDirection = direction;
+    emergencyTurn();
 }
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //SETUP________________________________________________________________________________________________________________
@@ -165,7 +144,7 @@ void setup(){
   pinMode(R1, OUTPUT);
   pinMode(R2, OUTPUT);
   pinMode(ENR, OUTPUT);
-
+  pinMode(led,OUTPUT);
   //PWM setup
   ledcSetup(pwmChannelL, pwmFreq, pwmResolution);
   ledcAttachPin(ENL, pwmChannelL);
@@ -203,20 +182,7 @@ void loop(){
 
     //DEBUG
     if(iteration % 100 == 0){
-        drop(analogPins, analogValues);
-        if(whiteCali && blackCali){
-            for(int i = 0; i < sensorsNumber; i++){
-                if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
-                    caliValues[i] = -1;
-                }
-                else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
-                    caliValues[i] = 1;
-                }
-                else{
-                    caliValues[i] = 0;
-                }
-            }
-        }
+        updateCaliValues();
         //basicInfo();
         levelsInfo();
     }
@@ -337,6 +303,14 @@ int sumSensorsAnalog(){
   }
   return x;
 }
+//Suma-skalibrowanych-wartości-czujników 
+int sumCaliValues(){
+  int x = 0;
+  for(int i = 0; i < sensorsNumber; i++){
+    x += caliValues[i];
+  }
+  return x;
+}
 //Reset-wag
 void resetWeights(){
     sensorsWeights[0] = -s08;
@@ -355,4 +329,19 @@ void disableWeights(int idxs[], int size){
         int idx = idxs[i];
         sensorsWeights[idx] = 0;
     }
+}
+
+void updateCaliValues(){
+    drop(analogPins, analogValues);
+        for(int i = 0; i < sensorsNumber; i++){
+            if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
+                caliValues[i] = -1;
+            }
+            else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){
+                caliValues[i] = 1;
+            }
+            else{
+                caliValues[i] = 0;
+            }
+        }
 }
