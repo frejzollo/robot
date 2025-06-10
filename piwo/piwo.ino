@@ -1,4 +1,4 @@
-//HARDWARE-PINY___________________________________________________________
+//HARDWARE-PINY________________________________________________________________________________________________________
 const int sensorsNumber = 9;
 int analogPins[sensorsNumber] = {27, 26, 25, 33, 32, 35, 34, 39, 36}; //patrząc z góry od lewej do prawej
 const int button = 18;
@@ -10,60 +10,66 @@ const int R1 = 16;
 const int ENL = 23; 
 const int L1 = 21;
 const int L2 = 22;
-//BACK-EMF________________________________________________________________
-bool doIGiveAFuck = true; //Jak false to wszystkie dodatkowe zabezpieczenia idą się jebać
+//BACK-EMF_____________________________________________________________________________________________________________
+bool doIGiveAFuck = true; //jak false to wszystkie dodatkowe zabezpieczenia idą się jebać
 int safetySpeedChange = 50;
 int backEMFDelay = 30;
-//PWM_____________________________________________________________________
+//PWM__________________________________________________________________________________________________________________
 const int pwmFreq = 1000;
 const int pwmResolution = 8;
 const int pwmChannelL = 0;
 const int pwmChannelR = 1;
-//SOFTWARE-ZMIENNE________________________________________________________
-int sensorsInAirValue = 100;
+//SOFTWARE-ZMIENNE_____________________________________________________________________________________________________
 int loopDelay = 10;
-//SOFTWARE-TABLICE________________________________________________________
+//SOFTWARE-TABLICE_____________________________________________________________________________________________________
 int analogValues[sensorsNumber];
 int blackLevels[sensorsNumber]; //stany na linii
 int whiteLevels[sensorsNumber]; //stany na powierzchni
 int caliValues[sensorsNumber]; //skalibrowane
-//ZAKRESY-BŁĘDÓW__________________________________________________________
-int readErrorBlack = 300; // podloga
-int readErrorWhite = 300; // linia
-//ZMIENNE-POMOCNICZE______________________________________________________
+//ZAKRESY-BŁĘDÓW_______________________________________________________________________________________________________
+int readErrorBlack = 300;
+int readErrorWhite = 300;
+//ZMIENNE-POMOCNICZE___________________________________________________________________________________________________
 bool blackCali = false; //czy skalibrowano sensory na linie
 bool whiteCali = false; //czy skalibrowano sensory na powierzchnie
 int iteration = 0;
-int mode=0; //tryb guzika
-//STROJENIE>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+int mode = 0; //tryb guzika
+//STROJENIE>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 float speedNerf = 0.3;
+float turnSpeed = 255.0;
+float arcMov = 0.8;
 float Kp = 65.0;
 float Kd = 45.0;
-float sensorsWeights[sensorsNumber] = {-10.0, -4.0, -3.0, -2.0, 0.0, 2.0, 3.0, 4.0, 10.0};
+float s08 = 10.0;
+float s17 = 4.0;
+float s26 = 3.0;
+float s35 = 2.0;
+float s4 = 0.0;
+float sensorsWeights[sensorsNumber] = {-s08, -s17, -s26, -s35, s4, s35, s26, s17, s08};
 float baseSpeedMax = 240.0;
 float baseSpeedMin = 120.0;
-//POMOC-STROJENIA>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+//POMOC-STROJENIA>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 int lastKnowDirection = 0; //-1 lewo, 1 prawo
 int hardTurn = 0; //-1 lewo, 1 prawo
 int hardTimeStart = 0;
-//CZASY-STROJENIA>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-int inRideDelay = 5;
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-//FUNKCJE-GŁÓWNE<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+//FUNKCJE-GŁÓWNE<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 void ride(){
     while(digitalRead(button)){
+        //Update-sensorów______________________________________________________________________________________________
         drop(analogPins, analogValues);
         for(int i = 0; i < sensorsNumber; i++){
                 if(abs(blackLevels[i] - analogValues[i]) < readErrorBlack){
                     caliValues[i] = -1;
                 }
-                else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){ //or dlatego, że kalibracja mogła być w cieniu czy coś tam...
+                else if(abs(whiteLevels[i] - analogValues[i]) < readErrorWhite || analogValues[i] > whiteLevels[i]){
                     caliValues[i] = 1;
                 }
                 else{
                     caliValues[i] = 0;
                 }
             }
+        //_____________________________________________________________________________________________________________
         float lineError = 0.0;
         int count = 0;
         for(int i = 0; i < sensorsNumber; i++){
@@ -111,12 +117,7 @@ void ride(){
         }
 
         if(caliValues[4] == -1){
-            sensorsWeights[8] = 10.0;
-            sensorsWeights[7] = 4.0;
-            sensorsWeights[6] = 3.0;
-            sensorsWeights[0] = -10.0;
-            sensorsWeights[1] = -4.0;
-            sensorsWeights[2] = -3.0;
+            resetWeights();
         }
         leftMotor(leftSpeed);
         rightMotor(rightSpeed);        
@@ -126,35 +127,31 @@ void ride(){
 void emergencyTurn(){
     if(hardTurn != 0){
         if(hardTurn == 1){
-            sensorsWeights[8] = 0;
-            sensorsWeights[7] = 0;
-            sensorsWeights[6] = 0;
-            //sensorsWeights[3] = 0;
-            leftMotor(255);
-            rightMotor(-200);
+            int idx[] = {8,7,6};
+            disableWeights(idx, sizeof(idx) / sizeof(idx[0]));
+            leftMotor(turnSpeed);
+            rightMotor(-turnSpeed * arcMov);
         }
         else{
-            sensorsWeights[0] = 0;
-            sensorsWeights[1] = 0;
-            sensorsWeights[2] = 0;
-            //sensorsWeights[3] = 0;
-            leftMotor(-200);
-            rightMotor(255);
+            int idx[] = {0,1,2};
+            disableWeights(idx, sizeof(idx) / sizeof(idx[0]));
+            leftMotor(-turnSpeed * arcMov);
+            rightMotor(turnSpeed);
         }
     }
     else{
         if(lastKnowDirection == 1){
-            leftMotor(255);
-            rightMotor(-200);
+            leftMotor(turnSpeed);
+            rightMotor(-turnSpeed * arcMov);
         }
         else if(lastKnowDirection == -1){
-            leftMotor(-200);
-            rightMotor(255);
+            leftMotor(-turnSpeed * arcMov);
+            rightMotor(turnSpeed);
         }
     }
 }
-//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-//SETUP___________________________________________________________________
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//SETUP________________________________________________________________________________________________________________
 void setup(){
   Serial.begin(9600);
 
@@ -175,7 +172,7 @@ void setup(){
   ledcSetup(pwmChannelR, pwmFreq, pwmResolution);
   ledcAttachPin(ENR, pwmChannelR);
 }
-//LOOP____________________________________________________________________
+//LOOP_________________________________________________________________________________________________________________
 void loop(){
     if (digitalRead(button) == LOW) {
         mode += 1;
@@ -228,7 +225,7 @@ void loop(){
     iteration += 1;
     delay(loopDelay);
 }
-//DEBUG___________________________________________________________________
+//DEBUG________________________________________________________________________________________________________________
 void basicInfo(){
 
   Serial.print(digitalRead(button));
@@ -265,7 +262,7 @@ void levelsInfo(){
   }
   Serial.println();
 }
-//FUNKCJE-DODATKOWE_______________________________________________________
+//FUNKCJE-DODATKOWE____________________________________________________________________________________________________
 //Lewy-silnik
 void leftMotor(float speed) {
 
@@ -339,4 +336,23 @@ int sumSensorsAnalog(){
     x += analogValues[i];
   }
   return x;
+}
+//Reset-wag
+void resetWeights(){
+    sensorsWeights[0] = -s08;
+    sensorsWeights[1] = -s17;
+    sensorsWeights[2] = -s26;
+    sensorsWeights[3] = -s35;
+    sensorsWeights[4] = s4;
+    sensorsWeights[5] = s35;
+    sensorsWeights[6] = s26;
+    sensorsWeights[7] = s17;
+    sensorsWeights[6] = s08;
+}
+//Wyłączanie-wag
+void disableWeights(int idxs[], int size){
+    for (int i = 0; i < size; i++){
+        int idx = idxs[i];
+        sensorsWeights[idx] = 0;
+    }
 }
