@@ -203,6 +203,9 @@ void handleModeChange() {
         }
         lastHandledMode = mode;  // zapamiętaj, że już obsłużyliśmy ten tryb
     }
+
+    if(mode == 3)
+      ride();
 }
 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -231,8 +234,6 @@ void setup(){
 void loop(){
     checkButton();
     handleModeChange();
-  
-    ride();
 
     //DEBUG
     if(iteration % 100 == 0){
