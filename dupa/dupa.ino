@@ -221,17 +221,11 @@ void emergencyTurn(){
   {
     if(hardTurn == 1)
     {
-      sensor_weights[8] = 0;
-      sensor_weights[7] = 0;
-      sensor_weights[6] = 0;
       //sensor_weights[3] = 0;
       leftMotor(200);
       rightMotor(-255);
     }
     else{
-      sensor_weights[0] = 0;
-      sensor_weights[1] = 0;
-      sensor_weights[2] = 0;
       //sensor_weights[3] = 0;
       leftMotor(-255);
       rightMotor(200);
