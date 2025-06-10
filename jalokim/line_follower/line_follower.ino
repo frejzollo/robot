@@ -158,35 +158,33 @@ void emergencyTurn(){
 
 
 void checkButton() {
-    bool currentButtonState = digitalRead(button);
-    unsigned long currentTime = millis();
-  
-    if (currentButtonState != lastButtonState) {
-      lastDebounceTime = currentTime;
+  bool currentButtonState = digitalRead(button);
+  unsigned long currentTime = millis();
+
+  // debounce – tylko jeśli stan się zmienił
+  if (currentButtonState != lastButtonState) {
+    lastDebounceTime = currentTime;
+  }
+
+  // tylko jeśli stan utrzymuje się po czasie debounce
+  if ((currentTime - lastDebounceTime) > DEBOUNCE_TIME) {
+    // wykrycie ZBOCZA OPADAJĄCEGO (HIGH → LOW)
+    if (lastButtonState == HIGH && currentButtonState == LOW) {
+      mode = (mode + 1) % 5;  // obrót w zakresie 0–5
+      Serial.print("Tryb zmieniony na: ");
+      Serial.println(mode);
     }
-  
-    if ((currentTime - lastDebounceTime) > DEBOUNCE_TIME) {
-        if (currentButtonState == LOW && (currentTime - lastPressHandledTime) > HOLD_OFF_TIME) {
-            mode++;
-            if (mode > 5) {
-                mode = 0;
-            }
-    
-            Serial.print("Wciśnięto przycisk");
-    
-            lastPressHandledTime = currentTime;
-        }
-    }
-  
-    lastButtonState = currentButtonState;
+  }
+
+  lastButtonState = currentButtonState;
 }
 
 void handleModeChange() {
     if (mode != lastHandledMode) {
       switch (mode) {
         case 1:
-            drop(analogPins, blackLevels);
             Serial.println("Zmiana na stan 1. (set blackLevels)");
+            drop(analogPins, blackLevels);
             blackCali = true;
             break;
         case 2:
@@ -214,7 +212,7 @@ void handleModeChange() {
 
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //SETUP________________________________________________________________________________________________________________
-void setup(){
+void setup() {
   Serial.begin(9600);
 
   for (int i = 0; i < sensorsNumber; i++) {
@@ -261,7 +259,7 @@ void basicInfo() {
   Serial.print(mode);
   Serial.println();
 }
-void levelsInfo(){
+void levelsInfo() {
 
   Serial.print("[");
   for (int i = 0; i < sensorsNumber; i++) {
