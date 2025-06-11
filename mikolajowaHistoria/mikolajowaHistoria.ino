@@ -35,7 +35,7 @@ float Kp = 48.2;
 float Kd = 38.0;
 float baseSpeedMax = 200.0;
 float baseSpeedMin = -200.0;
-float sensor_weights[sensorsNumber] = {-3.4, -3.0, -2.15, -1.15, 0.0, 1.15, 2.15, 3.0, 3.4};
+float sensor_weights[sensorsNumber] = {-3.2, -3.2, -2.15, -1.15, 0.0, 1.15, 2.15, 3.2, 3.2};
 int inRideDelay = 5;
 int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
 int hardTurn = 0; // wartosc -1 lewo, 1 prawo
@@ -66,7 +66,7 @@ int caliValues[sensorsNumber][historyLength]; //skalibrowane
 void leftMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * 0.65;
+  speed = constrain(speed, -255.0, 255.0) * 0.68;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(L1, HIGH);
@@ -97,7 +97,7 @@ void leftMotor(float speed) {
 void rightMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * 0.65;
+  speed = constrain(speed, -255.0, 255.0) * 0.68;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(R1, HIGH);
@@ -222,24 +222,24 @@ void emergencyTurn(){
     if(hardTurn == 1)
     {
       //sensor_weights[3] = 0;
-      leftMotor(95);
+      leftMotor(100);
       rightMotor(-125);
     }
     else{
       //sensor_weights[3] = 0;
       leftMotor(-125);
-      rightMotor(95);
+      rightMotor(100);
     }
   }
   else{
   if(lastKnowDirection == 1)
   {
-    leftMotor(95);
+    leftMotor(100);
     rightMotor(-125);
   }
   else if(lastKnowDirection == -1){
     leftMotor(-125);
-    rightMotor(95);
+    rightMotor(100);
   }
 }
 isTurn = true;
