@@ -320,13 +320,13 @@ void loop(){
   {
     leftMotor(0);
     rightMotor(0);
-  }
+471}
   
   
   //DEBUG
   if(iteration % 100 == 0){
   //basicInfo();
-  levelsInfo();
+  levelsInfo()-
   //caliHardTurn();
   }
   iteration += 1;

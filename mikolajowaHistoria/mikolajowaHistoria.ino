@@ -25,17 +25,17 @@ const int pwmResolution = 8;
 const int pwmChannelL = 0;
 const int pwmChannelR = 1;
 
-
+int k = 0;
 //SOFTWARE-ZIMENNE__________________________________________________________
 int loopDelay = 10;
 int iteration = 0;
 int mode=0; // tryb guzika
 int sensorsInAirValue = 100;
-float Kp = 75.0;
-float Kd = 55.0;
-float baseSpeedMax = 240.0;
-float baseSpeedMin = 120.0;
-float sensor_weights[sensorsNumber] = {-9.0, -4.0, -3.0, -2.0, 0.0, 2.0, 3.0, 4.0, 9.0};
+float Kp = 50.0;
+float Kd = 35.0;
+float baseSpeedMax = 200.0;
+float baseSpeedMin = -200.0;
+float sensor_weights[sensorsNumber] = {-3.2, -3.0, -2, -1.5, 0.0, 1.5, 2, 3.0, 3.2};
 int inRideDelay = 5;
 int lastKnowDirection = 0; // wartosc -1 lewo, 1 prawo
 int hardTurn = 0; // wartosc -1 lewo, 1 prawo
@@ -56,7 +56,7 @@ int analogValues[sensorsNumber];
 int blackLevels[sensorsNumber]; //stany na linii
 int whiteLevels[sensorsNumber]; //stany na powierzchni
 const int historyLength = 1;
-int actualHistoryIndex = 5;
+int actualHistoryIndex = 2;
 int caliValues[sensorsNumber][historyLength]; //skalibrowane
 
 
@@ -66,7 +66,7 @@ int caliValues[sensorsNumber][historyLength]; //skalibrowane
 void leftMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * 0.37;
+  speed = constrain(speed, -255.0, 255.0) * 0.57;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(L1, HIGH);
@@ -97,7 +97,7 @@ void leftMotor(float speed) {
 void rightMotor(float speed) {
 
   static float lastSpeed = 0;
-  speed = constrain(speed, -255.0, 255.0) * 0.37;
+  speed = constrain(speed, -255.0, 255.0) * 0.57;
 
   if(abs(speed - lastSpeed) > safetySpeedChange && doIGiveAFuck){
     digitalWrite(R1, HIGH);
@@ -160,8 +160,9 @@ void ride(){
     return;
   }
   if(isTurn){
-    leftMotor(-lastKnowDirection * 255);
-    rightMotor(lastKnowDirection * 255);
+    leftMotor(-lastKnowDirection * 150);
+    rightMotor(lastKnowDirection * 150);
+    
     delay(20);
     isTurn = false;
   }
@@ -172,7 +173,7 @@ void ride(){
   last_error = line_error;
 
   // Dynamiczna prędkość w zależności od zakrętu
-  float base_speed = constrain(baseSpeedMax - abs(line_error) * 10.0, baseSpeedMin, baseSpeedMax);
+  float base_speed = constrain(baseSpeedMax - abs(line_error) * 40.0, baseSpeedMin, baseSpeedMax);
 
   float left_speed = base_speed + correction;
   float right_speed = base_speed - correction;
@@ -200,7 +201,7 @@ void ride(){
     }
   }
 
-  if(millis() - hardTimeStart > 500){
+  if(millis() - hardTimeStart > 400){
     hardTurn = 0;
   }
 
@@ -215,30 +216,30 @@ void ride(){
 }
  
 void emergencyTurn(){
-  
+  k++;
   if(hardTurn != 0)
   {
     if(hardTurn == 1)
     {
       //sensor_weights[3] = 0;
-      leftMotor(100);
-      rightMotor(-150);
+      leftMotor(95);
+      rightMotor(-130);
     }
     else{
       //sensor_weights[3] = 0;
-      leftMotor(-150);
-      rightMotor(100);
+      leftMotor(-130);
+      rightMotor(95);
     }
   }
   else{
   if(lastKnowDirection == 1)
   {
-    leftMotor(100);
-    rightMotor(-150);
+    leftMotor(95);
+    rightMotor(-130);
   }
   else if(lastKnowDirection == -1){
-    leftMotor(-150);
-    rightMotor(100);
+    leftMotor(-130);
+    rightMotor(95);
   }
 }
 isTurn = true;
@@ -354,7 +355,8 @@ void loop(){
   //DEBUG
   if(iteration % 100 == 0){
   //basicInfo();
-  levelsInfo();
+  finalInfo();
+  // levelsInfo();
   //caliHardTurn();
   }
   iteration += 1;
@@ -416,5 +418,17 @@ void caliHardTurn(){
   Serial.print(caliValues[0][getHistoricalValue()] == 1);
   Serial.print(" , ");
   Serial.print(caliValues[8][getHistoricalValue()] == 1);
+  Serial.println();
+}
+
+void finalInfo(){
+  for (int i = 0; i < sensorsNumber; i++) {
+    Serial.print(analogValues[i] >= 1000 && analogValues[i] < 4000 ? " ✅ " : analogValues[i] >= 800 && analogValues[i] < 4000 ? " 🤔 " : " 💀 ");
+  }
+  Serial.print("  [");
+  for (int i = 0; i < sensorsNumber; i++) {
+    Serial.print(analogValues[i]);
+    Serial.print(i < sensorsNumber - 1 ? ", " : "]");
+  }
   Serial.println();
 }
